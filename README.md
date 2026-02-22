@@ -1,6 +1,10 @@
 # Snow Framework
 
+> **31 source files · ~7,800 lines of code · zero external dependencies**
+
 A comprehensive PHP web framework for building dynamic websites with MySQL backend, designed for Linux servers running Apache2 and PHP 8.4.
+
+![Snow Admin Dashboard](docs/screenshot.png)
 
 ## Features
 
