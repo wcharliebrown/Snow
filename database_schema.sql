@@ -115,8 +115,8 @@ CREATE TABLE report_templates (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL UNIQUE,
     description TEXT NULL,
-    sql_table VARCHAR(255) NOT NULL,
-    sql_fields VARCHAR(500) DEFAULT '*',
+    sql_table TEXT NOT NULL,
+    sql_fields TEXT DEFAULT NULL,
     sql_where TEXT NULL,
     sql_order VARCHAR(500) NULL,
     rows_per_page INT DEFAULT 20,
@@ -371,11 +371,21 @@ FROM users u, user_groups_list g
 WHERE u.email = 'admin@example.com' AND g.name = 'Administrators';
 
 -- Insert default pages
-INSERT INTO pages (title, path, content, meta_description, template_file, require_auth, status) VALUES
-('Home', 'home', '<h1>Welcome to Snow Framework</h1><p>This is the home page of your Snow-powered website.</p>', 'Welcome to Snow Framework', 'default_page_template.html', 0, 'active'),
-('Login', 'login', '<h1>Login</h1><p>Please enter your credentials to access the system.</p>', 'Login to Snow Framework', 'login_page_template.html', 0, 'active'),
-('Profile', 'profile', '<h1>User Profile</h1><p>Manage your account settings here.</p>', 'User Profile', 'default_page_template.html', 1, 'active'),
-('Admin Dashboard', 'admin', '<h1>Admin Dashboard</h1><p>Welcome to the admin area.</p>', 'Admin Dashboard', 'admin_page_template.html', 1, 'active');
+INSERT INTO pages (title, path, content, meta_description, template_file, custom_script, require_auth, required_permission, status) VALUES
+('Home',             'home',             '<h1>Welcome to Snow Framework</h1><p>This is the home page of your Snow-powered website.</p>', 'Welcome to Snow Framework', 'default_page_template.html', NULL,                  0, NULL,                'active'),
+('Login',            'login',            '',                                                                                              'Login to Snow Framework',  'login_page_template.html',  'login.php',           0, NULL,                'active'),
+('Profile',          'profile',          '',                                                                                              'User Profile',             'default_page_template.html', 'profile.php',         1, NULL,                'active'),
+('Admin Dashboard',  'admin',            '',                                                                                              'Admin Dashboard',          'admin_page_template.html',  'admin.php',           1, NULL,                'active'),
+('Logout',           'logout',           '',                                                                                              'Logout',                   'default_page_template.html', 'logout.php',          0, NULL,                'active'),
+('User Management',  'admin/users',      '',                                                                                              'User Management',          'admin_page_template.html',  'admin-users.php',     1, 'user_management',   'active'),
+('Page Management',  'admin/pages',      '',                                                                                              'Page Management',          'admin_page_template.html',  'admin-pages.php',     1, 'page_management',   'active'),
+('Group Management', 'admin/groups',     '',                                                                                              'Group Management',         'admin_page_template.html',  'admin-groups.php',    1, 'group_management',  'active'),
+('Reports',          'admin/reports',    '',                                                                                              'Reports',                  'admin_page_template.html',  'admin-reports.php',   1, 'report_management', 'active'),
+('Custom Tables',    'admin/tables',     '',                                                                                              'Custom Tables',            'admin_page_template.html',  'admin-tables.php',    1, 'table_management',  'active'),
+('Email Templates',  'admin/emails',     '',                                                                                              'Email Templates',          'admin_page_template.html',  'admin-emails.php',    1, 'email_management',  'active'),
+('Plugins',          'admin/plugins',    '',                                                                                              'Plugins',                  'admin_page_template.html',  'admin-plugins.php',   1, 'plugin_management', 'active'),
+('Snapshots',        'admin/snapshots',  '',                                                                                              'Snapshots',                'admin_page_template.html',  'admin-snapshots.php', 1, 'snapshot_management','active'),
+('Logs',             'admin/logs',       '',                                                                                              'Logs',                     'admin_page_template.html',  'admin-logs.php',      1, 'log_viewing',       'active');
 
 -- Insert default navigation
 INSERT INTO navigation (menu_name, title, url, sort_order, status) VALUES
@@ -387,3 +397,29 @@ INSERT INTO navigation (menu_name, title, url, sort_order, status) VALUES
 -- Create default encryption key
 INSERT INTO encryption_keys (name, description) VALUES
 ('default', 'Default encryption key for general use');
+
+-- Insert built-in report: pages list (used by admin/pages list view)
+INSERT INTO report_templates (name, description, sql_table, sql_fields, sql_where, sql_order, rows_per_page, output_format, html_header, html_row_template, html_footer, status) VALUES
+(
+    'pages_list',
+    'All pages — matches the admin/pages list view',
+    'pages p LEFT JOIN page_templates t ON p.template_file = t.filename',
+    'p.id,
+    p.title,
+    p.path,
+    COALESCE(t.name, p.template_file) AS template_name,
+    CASE WHEN p.require_auth = 1 THEN ''<span class="badge bg-warning">Yes</span>'' ELSE ''<span class="badge bg-secondary">No</span>'' END AS auth_badge,
+    CASE p.status WHEN ''active'' THEN ''<span class="badge bg-success">active</span>'' WHEN ''inactive'' THEN ''<span class="badge bg-secondary">inactive</span>'' ELSE ''<span class="badge bg-secondary">other</span>'' END AS status_badge',
+    'p.status != ''deleted''',
+    'p.sort_order, p.title',
+    50,
+    'html',
+    '<table class="table table-striped table-hover">
+<thead class="table-dark">
+<tr><th>ID</th><th>Title</th><th>Path</th><th>Template</th><th>Auth</th><th>Status</th><th>Actions</th></tr>
+</thead>
+<tbody>',
+    '<tr><td>{{id}}</td><td>{{title}}</td><td><code>{{path}}</code></td><td>{{template_name}}</td><td>{{auth_badge}}</td><td>{{status_badge}}</td><td><a href="/admin/pages?action=edit&amp;id={{id}}" class="btn btn-primary btn-sm">Edit</a></td></tr>',
+    '</tbody></table>',
+    'active'
+);

@@ -183,9 +183,9 @@ if ($action === 'add') {
                 <label class="form-label">Description</label>
                 <textarea name="description" class="form-control" rows="2"><?= htmlspecialchars($_POST['description'] ?? '') ?></textarea>
             </div>
-            <div class="col-md-4">
+            <div class="col-12">
                 <label class="form-label">Source Table <span class="text-danger">*</span></label>
-                <input type="text" name="sql_table" class="form-control" value="<?= htmlspecialchars($_POST['sql_table'] ?? '') ?>" placeholder="e.g. users" required>
+                <textarea name="sql_table" class="form-control font-monospace" rows="3" placeholder="e.g. users&#10;or: pages p LEFT JOIN page_templates t ON p.template_file = t.filename" required><?= htmlspecialchars($_POST['sql_table'] ?? '') ?></textarea>
             </div>
             <div class="col-md-4">
                 <label class="form-label">Fields</label>
@@ -265,9 +265,9 @@ if ($action === 'add') {
                     <label class="form-label">Description</label>
                     <textarea name="description" class="form-control" rows="2"><?= $v('description') ?></textarea>
                 </div>
-                <div class="col-md-4">
+                <div class="col-12">
                     <label class="form-label">Source Table <span class="text-danger">*</span></label>
-                    <input type="text" name="sql_table" class="form-control" value="<?= $v('sql_table') ?>" required>
+                    <textarea name="sql_table" class="form-control font-monospace" rows="3" required><?= $v('sql_table') ?></textarea>
                 </div>
                 <div class="col-md-4">
                     <label class="form-label">Fields</label>
