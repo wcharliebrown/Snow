@@ -480,3 +480,32 @@ INSERT INTO report_templates (name, description, sql_table, sql_fields, sql_wher
     '</tbody></table>',
     'active'
 );
+
+-- Insert built-in report: reports list (used by admin/reports list view)
+INSERT INTO report_templates (name, description, sql_table, sql_fields, sql_where, sql_order, rows_per_page, output_format, html_header, html_row_template, html_footer, status) VALUES
+(
+    'reports_list',
+    'All reports — matches the admin/reports list view',
+    'report_templates',
+    'id,
+    name,
+    CASE WHEN description IS NOT NULL AND description != ''''
+        THEN CONCAT(''<strong>'', name, ''</strong><br><small class="text-muted">'', description, ''</small>'')
+        ELSE CONCAT(''<strong>'', name, ''</strong>'')
+    END AS name_display,
+    CONCAT(''<code>'', REPLACE(REPLACE(sql_table, ''<'', ''&lt;''), ''>'', ''&gt;''), ''</code>'') AS table_display,
+    UPPER(output_format) AS format_display,
+    CASE status WHEN ''active'' THEN ''<span class="badge bg-success">active</span>'' ELSE ''<span class="badge bg-secondary">inactive</span>'' END AS status_badge',
+    'status != ''deleted''',
+    'name',
+    50,
+    'html',
+    '<table class="table table-striped table-hover">
+<thead class="table-dark">
+<tr><th>Name</th><th>Table</th><th>Format</th><th>Status</th><th>Actions</th></tr>
+</thead>
+<tbody>',
+    '<tr><td>{{name_display}}</td><td>{{table_display}}</td><td>{{format_display}}</td><td>{{status_badge}}</td><td><a href="/admin/reports?action=run&amp;id={{id}}" class="btn btn-info btn-sm">Run</a> <a href="/admin/reports?action=edit&amp;id={{id}}" class="btn btn-primary btn-sm">Edit</a></td></tr>',
+    '</tbody></table>',
+    'active'
+);

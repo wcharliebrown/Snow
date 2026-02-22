@@ -352,47 +352,20 @@ if ($action === 'add') {
         ['title' => 'Admin',   'url' => '/admin'],
         ['title' => 'Reports', 'url' => '', 'current' => true],
     ];
-    $reports = dbGetRows("SELECT * FROM report_templates WHERE status != 'deleted' ORDER BY name", []);
+    $reportCount = dbGetRow("SELECT COUNT(*) AS n FROM report_templates WHERE status != 'deleted'", [])['n'] ?? 0;
+    $listReport  = getReportByName('reports_list');
     ?>
     <?php if ($message): ?><div class="alert alert-success"><?= htmlspecialchars($message) ?></div><?php endif; ?>
     <?php if ($error):   ?><div class="alert alert-danger"><?= htmlspecialchars($error) ?></div><?php endif; ?>
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <span><?= count($reports) ?> report<?= count($reports) !== 1 ? 's' : '' ?></span>
+        <span><?= (int)$reportCount ?> report<?= $reportCount !== 1 ? 's' : '' ?></span>
         <a href="/admin/reports?action=add" class="btn btn-success btn-sm">+ Add Report</a>
     </div>
-    <table class="table table-striped table-hover">
-        <thead class="table-dark">
-            <tr>
-                <th>Name</th><th>Table</th><th>Format</th><th>Status</th><th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-        <?php foreach ($reports as $r): ?>
-            <tr>
-                <td>
-                    <strong><?= htmlspecialchars($r['name']) ?></strong>
-                    <?php if ($r['description']): ?><br><small class="text-muted"><?= htmlspecialchars($r['description']) ?></small><?php endif; ?>
-                </td>
-                <td><code><?= htmlspecialchars($r['sql_table']) ?></code></td>
-                <td><?= strtoupper(htmlspecialchars($r['output_format'])) ?></td>
-                <td>
-                    <span class="badge bg-<?= $r['status'] === 'active' ? 'success' : 'secondary' ?>">
-                        <?= htmlspecialchars($r['status']) ?>
-                    </span>
-                </td>
-                <td>
-                    <a href="/admin/reports?action=run&id=<?= (int)$r['id'] ?>" class="btn btn-info btn-sm">Run</a>
-                    <a href="/admin/reports?action=edit&id=<?= (int)$r['id'] ?>" class="btn btn-primary btn-sm">Edit</a>
-                    <form method="post" action="/admin/reports?action=delete&id=<?= (int)$r['id'] ?>" class="d-inline"
-                          onsubmit="return confirm('Delete report &quot;<?= htmlspecialchars(addslashes($r['name'])) ?>&quot;?')">
-                        <input type="hidden" name="action" value="delete">
-                        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
-                    </form>
-                </td>
-            </tr>
-        <?php endforeach; ?>
-        </tbody>
-    </table>
+    <?php if ($listReport): ?>
+        <?= renderReport($listReport) ?>
+    <?php else: ?>
+        <div class="alert alert-warning">Report <code>reports_list</code> not found. <a href="/admin/reports?action=add">Recreate it</a>.</div>
+    <?php endif; ?>
     <?php
 }
 
