@@ -225,6 +225,9 @@ if ($action === 'add') {
     <?php
 
 } elseif ($action === 'edit' && $reportId) {
+    // Sync DB from file before showing the edit form (file is source of truth)
+    $preLoad = getReportById($reportId);
+    if ($preLoad) syncReportFromFile($preLoad['name']);
     $editReport = getReportById($reportId);
     if (!$editReport) {
         echo '<div class="alert alert-danger">Report not found.</div>';

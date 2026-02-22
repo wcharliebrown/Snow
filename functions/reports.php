@@ -4,6 +4,93 @@
  */
 
 /**
+ * Derive PHP class name from report slug
+ * e.g. 'pages_list' → 'PagesListReport'
+ */
+function reportClassNameFromName($name) {
+    return str_replace('_', '', ucwords($name, '_')) . 'Report';
+}
+
+/**
+ * Absolute path to the report's PHP file
+ */
+function getReportFilePath($name) {
+    $slug = preg_replace('/[^a-z0-9_]/i', '_', $name);
+    return dirname(__DIR__) . '/reports/' . $slug . '.php';
+}
+
+/**
+ * Load a report from its PHP class file and return as a data array.
+ * Returns null if the file or class does not exist.
+ */
+function reportArrayFromFile($name) {
+    $path      = getReportFilePath($name);
+    $className = reportClassNameFromName($name);
+    if (!file_exists($path)) return null;
+    if (!class_exists($className)) require_once $path;
+    if (!class_exists($className)) return null;
+
+    $obj = new $className();
+    return [
+        'name'              => $name,
+        'description'       => $obj->description(),
+        'sql_table'         => $obj->sql_table(),
+        'sql_fields'        => $obj->sql_fields(),
+        'sql_where'         => $obj->sql_where(),
+        'sql_order'         => $obj->sql_order(),
+        'rows_per_page'     => (int)$obj->rows_per_page(),
+        'output_format'     => $obj->output_format(),
+        'html_header'       => $obj->html_header(),
+        'html_row_template' => $obj->html_row_template(),
+        'html_footer'       => $obj->html_footer(),
+        'status'            => 'active',
+    ];
+}
+
+/**
+ * Write a report data array to its PHP class file in reports/.
+ */
+function writeReportToFile($data) {
+    $name      = $data['name'] ?? '';
+    if (!$name) return false;
+    $path      = getReportFilePath($name);
+    $className = reportClassNameFromName($name);
+
+    $fields = ['name', 'description', 'sql_table', 'sql_fields', 'sql_where',
+               'sql_order', 'rows_per_page', 'output_format', 'html_header',
+               'html_row_template', 'html_footer'];
+
+    $content = "<?php\nclass {$className} {\n";
+    foreach ($fields as $field) {
+        $value    = $data[$field] ?? ($field === 'rows_per_page' ? 20 : null);
+        $exported = var_export($value, true);
+        $content .= "    public function {$field}() {\n        return {$exported};\n    }\n";
+    }
+    $content .= "}\n";
+
+    return file_put_contents($path, $content) !== false;
+}
+
+/**
+ * Sync the DB row for a report from its file (file wins).
+ * Creates the DB row if it does not exist yet.
+ */
+function syncReportFromFile($name) {
+    $fileData = reportArrayFromFile($name);
+    if (!$fileData) return false;
+
+    $existing = dbGetRow("SELECT id FROM report_templates WHERE name = ?", [$name]);
+    if ($existing) {
+        $update = $fileData;
+        unset($update['name']);
+        dbUpdate('report_templates', $update, 'name = ?', [$name]);
+    } else {
+        dbInsert('report_templates', $fileData);
+    }
+    return true;
+}
+
+/**
  * Get report by name
  */
 function getReportByName($reportName) {
@@ -77,15 +164,17 @@ function buildReportSQL($report, $params = []) {
 }
 
 /**
- * Save report template
+ * Save report template (DB + file)
  */
 function saveReport($data) {
     if (isset($data['id']) && $data['id']) {
-        return dbUpdate('report_templates', $data, 'id = ?', [$data['id']]);
+        $result = dbUpdate('report_templates', $data, 'id = ?', [$data['id']]);
     } else {
         $data['created_date'] = date('Y-m-d H:i:s');
-        return dbInsert('report_templates', $data);
+        $result = dbInsert('report_templates', $data);
     }
+    writeReportToFile($data);
+    return $result;
 }
 
 /**
@@ -256,19 +345,21 @@ function validateReport($data) {
 }
 
 /**
- * Duplicate a report
+ * Duplicate a report (DB + file)
  */
 function duplicateReport($reportId, $newName) {
     $original = dbGetRow("SELECT * FROM report_templates WHERE id = ?", [$reportId]);
     if (!$original) {
         return false;
     }
-    
+
     $newReport = $original;
     unset($newReport['id']);
-    $newReport['name'] = $newName;
+    $newReport['name']         = $newName;
     $newReport['created_date'] = date('Y-m-d H:i:s');
-    
-    return dbInsert('report_templates', $newReport);
+
+    $newId = dbInsert('report_templates', $newReport);
+    writeReportToFile($newReport);
+    return $newId;
 }
 ?>
