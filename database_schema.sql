@@ -448,3 +448,35 @@ INSERT INTO report_templates (name, description, sql_table, sql_fields, sql_wher
     '</tbody></table>',
     'active'
 );
+
+-- Insert built-in report: groups list (used by admin/groups list view)
+INSERT INTO report_templates (name, description, sql_table, sql_fields, sql_where, sql_order, rows_per_page, output_format, html_header, html_row_template, html_footer, status) VALUES
+(
+    'groups_list',
+    'All groups — matches the admin/groups list view',
+    '(SELECT g.id, g.name, g.description, g.status,
+        COUNT(DISTINCT ug.user_id)       AS member_count,
+        COUNT(DISTINCT gp.permission_id) AS permission_count
+      FROM user_groups_list g
+      LEFT JOIN user_groups ug       ON g.id = ug.group_id
+      LEFT JOIN group_permissions gp ON g.id = gp.group_id
+      GROUP BY g.id, g.name, g.description, g.status) AS grp',
+    'id,
+    name,
+    COALESCE(description, '''') AS description,
+    CONCAT(''<span class="badge bg-info text-dark">'', member_count, ''</span>'') AS member_badge,
+    CONCAT(''<span class="badge bg-secondary">'', permission_count, ''</span>'') AS permission_badge,
+    CASE status WHEN ''active'' THEN ''<span class="badge bg-success">active</span>'' ELSE ''<span class="badge bg-secondary">inactive</span>'' END AS status_badge',
+    NULL,
+    'name',
+    50,
+    'html',
+    '<table class="table table-striped table-hover">
+<thead class="table-dark">
+<tr><th>ID</th><th>Name</th><th>Description</th><th>Members</th><th>Permissions</th><th>Status</th><th>Actions</th></tr>
+</thead>
+<tbody>',
+    '<tr><td>{{id}}</td><td>{{name}}</td><td>{{description}}</td><td>{{member_badge}}</td><td>{{permission_badge}}</td><td>{{status_badge}}</td><td><a href="/admin/groups?action=edit&amp;id={{id}}" class="btn btn-primary btn-sm">Edit</a></td></tr>',
+    '</tbody></table>',
+    'active'
+);
