@@ -1,0 +1,25 @@
+FROM httpd:2.4
+
+# Enable required Apache modules by uncommenting them in httpd.conf
+RUN sed -i \
+    -e 's/#LoadModule rewrite_module/LoadModule rewrite_module/' \
+    -e 's/#LoadModule proxy_module/LoadModule proxy_module/' \
+    -e 's/#LoadModule proxy_fcgi_module/LoadModule proxy_fcgi_module/' \
+    -e 's/#LoadModule headers_module/LoadModule headers_module/' \
+    -e 's/#LoadModule expires_module/LoadModule expires_module/' \
+    /usr/local/apache2/conf/httpd.conf
+
+# Allow .htaccess overrides and include our vhost config
+RUN echo 'Include /usr/local/apache2/conf/snow.conf' >> /usr/local/apache2/conf/httpd.conf
+
+# Copy custom Apache configuration
+COPY apache-httpd.conf /usr/local/apache2/conf/snow.conf
+
+# Set working directory
+WORKDIR /var/www/html
+
+# Expose port
+EXPOSE 80
+
+# Start Apache
+CMD ["httpd-foreground"]

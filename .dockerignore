@@ -1,0 +1,19 @@
+# Add to .gitignore for Docker environments
+.DS_Store
+.vscode/
+.idea/
+
+# Docker volumes
+mysql_data/
+
+# Runtime files
+logs/*.log
+keys/*.key
+
+# Environment overrides
+.env.local
+.env.docker
+
+# Temporary files
+tmp/
+temp/

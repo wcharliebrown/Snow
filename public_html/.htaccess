@@ -1,0 +1,38 @@
+# Snow Framework - Apache Configuration
+
+# Enable URL rewriting
+RewriteEngine On
+
+# Security: block direct access to .env files anywhere
+<Files ".env*">
+    Require all denied
+</Files>
+
+# Security: block access to hidden files (.git, .DS_Store, etc.)
+<FilesMatch "^\.">
+    Require all denied
+</FilesMatch>
+
+# Security headers (mod_headers required)
+Header always set X-Content-Type-Options "nosniff"
+Header always set X-Frame-Options "DENY"
+Header always set X-XSS-Protection "1; mode=block"
+Header always set Referrer-Policy "strict-origin-when-cross-origin"
+
+# Cache static assets
+<FilesMatch "\.(ico|css|js|gif|jpg|jpeg|png|svg|woff|woff2|ttf|eot|webp)$">
+    Header set Cache-Control "max-age=2592000, public"
+    ExpiresActive On
+    ExpiresDefault "access plus 30 days"
+</FilesMatch>
+
+# Never cache PHP responses
+<FilesMatch "\.php$">
+    Header set Cache-Control "no-store, no-cache, must-revalidate"
+</FilesMatch>
+
+# URL rewriting: serve real files/directories directly;
+# everything else goes to index.php (Snow router)
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php [L,QSA]

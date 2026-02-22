@@ -1,0 +1,47 @@
+# Environment / credentials
+.env
+.env.backup
+.env.local
+.env.docker
+
+# Encryption keys
+keys/*.key
+keys/*.pem
+
+# Runtime logs
+logs/*.log
+
+# Database snapshots
+snapshots/
+
+# Session / test cookies
+cookies.txt
+
+# Claude Code project data
+.claude/
+
+# Ad-hoc debug / scratch files
+debug-*.php
+public_html/debug*.php
+public_html/fix-*.php
+public_html/test.png
+test-db.php
+test-framework.php
+test-simple.php
+test-simple.sh
+test-final.sh
+test-docker.sh
+test-login-form.html
+TEST-RESULTS.md
+start-mysql.sh
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+
+# Temporary
+tmp/
+temp/

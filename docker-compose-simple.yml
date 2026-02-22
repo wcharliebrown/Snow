@@ -1,0 +1,45 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: snow_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: snow
+      MYSQL_USER: snow_user
+      MYSQL_PASSWORD: snow_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./database_schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
+    networks:
+      - snow_network
+
+  php:
+    image: php:8.4-apache
+    container_name: snow_php
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    volumes:
+      - ./:/var/www/html
+    networks:
+      - snow_network
+    depends_on:
+      - mysql
+    command: >
+      bash -c "
+        docker-php-ext-install pdo pdo_mysql &&
+        a2enmod rewrite &&
+        apache2-foreground
+      "
+    environment:
+      APACHE_DOCUMENT_ROOT: /var/www/html/public_html
+
+volumes:
+  mysql_data:
+
+networks:
+  snow_network:
+    driver: bridge

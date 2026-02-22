@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{title}} - {{site_name}}</title>
+    <meta name="description" content="{{meta_description}}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .error-container {
+            text-align: center;
+            padding: 4rem 2rem;
+        }
+        .error-code {
+            font-size: 6rem;
+            font-weight: bold;
+            color: #dc3545;
+        }
+        .error-message {
+            font-size: 1.5rem;
+            color: #6c757d;
+            margin-bottom: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="error-container">
+                    <div class="error-code">{{error_code}}</div>
+                    <div class="error-message">{{error_message}}</div>
+                    <div class="error-details">
+                        {{content}}
+                    </div>
+                    <div class="mt-4">
+                        <a href="/" class="btn btn-primary">Go to Homepage</a>
+                        {{#if hasPermission('admin_access')}}
+                        <a href="/admin" class="btn btn-secondary ms-2">Admin Dashboard</a>
+                        {{/if}}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
