@@ -509,3 +509,121 @@ INSERT INTO report_templates (name, description, sql_table, sql_fields, sql_wher
     '</tbody></table>',
     'active'
 );
+
+-- Insert built-in report: emails list (used by admin/emails list view)
+INSERT INTO report_templates (name, description, sql_table, sql_fields, sql_where, sql_order, rows_per_page, output_format, html_header, html_row_template, html_footer, status) VALUES
+(
+    'emails_list',
+    'All email templates — matches the admin/emails list view',
+    'email_templates',
+    'id,
+    CASE WHEN description IS NOT NULL AND description != ''''
+        THEN CONCAT(''<strong>'', name, ''</strong><br><small class="text-muted">'', description, ''</small>'')
+        ELSE CONCAT(''<strong>'', name, ''</strong>'')
+    END AS name_display,
+    subject,
+    COALESCE(from_address, '''') AS from_address,
+    CASE allow_unsubscribe WHEN 1 THEN ''<span class="badge bg-info text-dark">Yes</span>'' ELSE ''<span class="badge bg-secondary">No</span>'' END AS unsub_badge,
+    CASE status WHEN ''active'' THEN ''<span class="badge bg-success">active</span>'' ELSE ''<span class="badge bg-secondary">inactive</span>'' END AS status_badge',
+    'status != ''deleted''',
+    'name',
+    50,
+    'html',
+    '<table class="table table-striped table-hover">
+<thead class="table-dark">
+<tr><th>Name</th><th>Subject</th><th>From</th><th>Unsubscribe</th><th>Status</th><th>Actions</th></tr>
+</thead>
+<tbody>',
+    '<tr><td>{{name_display}}</td><td>{{subject}}</td><td>{{from_address}}</td><td>{{unsub_badge}}</td><td>{{status_badge}}</td><td><a href="/admin/emails?action=edit&amp;id={{id}}" class="btn btn-primary btn-sm">Edit</a></td></tr>',
+    '</tbody></table>',
+    'active'
+);
+
+-- Insert built-in report: plugins list (used by admin/plugins list view)
+INSERT INTO report_templates (name, description, sql_table, sql_fields, sql_where, sql_order, rows_per_page, output_format, html_header, html_row_template, html_footer, status) VALUES
+(
+    'plugins_list',
+    'All plugins — matches the admin/plugins list view',
+    'plugins',
+    'id,
+    CASE WHEN description IS NOT NULL AND description != ''''
+        THEN CONCAT(''<strong>'', name, ''</strong><br><small class="text-muted">'', description, ''</small>'')
+        ELSE CONCAT(''<strong>'', name, ''</strong>'')
+    END AS name_display,
+    version,
+    COALESCE(author, '''') AS author,
+    CASE status WHEN ''active'' THEN ''<span class="badge bg-success">active</span>'' WHEN ''error'' THEN ''<span class="badge bg-danger">error</span>'' ELSE ''<span class="badge bg-secondary">inactive</span>'' END AS status_badge,
+    IFNULL(install_date, ''<span class="text-muted">Never</span>'') AS install_date_display',
+    NULL,
+    'name',
+    50,
+    'html',
+    '<table class="table table-striped table-hover">
+<thead class="table-dark">
+<tr><th>Name</th><th>Version</th><th>Author</th><th>Status</th><th>Installed</th></tr>
+</thead>
+<tbody>',
+    '<tr><td>{{name_display}}</td><td>{{version}}</td><td>{{author}}</td><td>{{status_badge}}</td><td>{{install_date_display}}</td></tr>',
+    '</tbody></table>',
+    'active'
+);
+
+-- Insert built-in report: snapshots list (used by admin/snapshots list view)
+INSERT INTO report_templates (name, description, sql_table, sql_fields, sql_where, sql_order, rows_per_page, output_format, html_header, html_row_template, html_footer, status) VALUES
+(
+    'snapshots_list',
+    'All snapshots — matches the admin/snapshots list view',
+    'snapshots s LEFT JOIN users u ON s.created_by = u.id',
+    's.id,
+    CONCAT(''<code>'', s.table_name, ''</code>'') AS table_display,
+    s.snapshot_name,
+    COALESCE(s.description, '''') AS description,
+    s.snapshot_date,
+    CONCAT(''<span class="badge bg-secondary">'', FORMAT(s.row_count, 0), ''</span>'') AS row_badge,
+    CASE WHEN u.first_name IS NOT NULL
+        THEN CONCAT(u.first_name, '' '', u.last_name)
+        ELSE ''<span class="text-muted">&mdash;</span>''
+    END AS created_by_display',
+    's.status = ''active''',
+    's.snapshot_date DESC',
+    50,
+    'html',
+    '<table class="table table-striped table-hover">
+<thead class="table-dark">
+<tr><th>Table</th><th>Snapshot Name</th><th>Description</th><th>Date</th><th>Rows</th><th>By</th></tr>
+</thead>
+<tbody>',
+    '<tr><td>{{table_display}}</td><td>{{snapshot_name}}</td><td>{{description}}</td><td>{{snapshot_date}}</td><td>{{row_badge}}</td><td>{{created_by_display}}</td></tr>',
+    '</tbody></table>',
+    'active'
+);
+
+-- Insert built-in report: custom tables list (used by admin/tables list view)
+INSERT INTO report_templates (name, description, sql_table, sql_fields, sql_where, sql_order, rows_per_page, output_format, html_header, html_row_template, html_footer, status) VALUES
+(
+    'tables_list',
+    'All custom table definitions — matches the admin/tables list view',
+    '(SELECT ct.id, ct.table_name, ct.display_name, ct.description, ct.status,
+        COUNT(ctf.id) AS field_count
+      FROM custom_tables ct
+      LEFT JOIN custom_table_fields ctf ON ct.table_name = ctf.table_name AND ctf.status = ''active''
+      GROUP BY ct.id, ct.table_name, ct.display_name, ct.description, ct.status) AS ct',
+    'id,
+    CONCAT(''<code>'', table_name, ''</code>'') AS table_display,
+    display_name,
+    COALESCE(description, '''') AS description,
+    CONCAT(''<span class="badge bg-info text-dark">'', field_count, ''</span>'') AS field_badge,
+    CASE status WHEN ''active'' THEN ''<span class="badge bg-success">active</span>'' ELSE ''<span class="badge bg-secondary">inactive</span>'' END AS status_badge',
+    NULL,
+    'display_name',
+    50,
+    'html',
+    '<table class="table table-striped table-hover">
+<thead class="table-dark">
+<tr><th>Table Name</th><th>Display Name</th><th>Description</th><th>Fields</th><th>Status</th><th>Actions</th></tr>
+</thead>
+<tbody>',
+    '<tr><td>{{table_display}}</td><td>{{display_name}}</td><td>{{description}}</td><td>{{field_badge}}</td><td>{{status_badge}}</td><td><a href="/admin/tables?action=fields&amp;id={{id}}" class="btn btn-info btn-sm">Fields</a> <a href="/admin/tables?action=edit&amp;id={{id}}" class="btn btn-primary btn-sm">Edit</a></td></tr>',
+    '</tbody></table>',
+    'active'
+);

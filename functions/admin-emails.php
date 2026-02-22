@@ -259,47 +259,20 @@ if ($action === 'add') {
         ['title' => 'Admin',           'url' => '/admin'],
         ['title' => 'Email Templates', 'url' => '', 'current' => true],
     ];
-    $templates = dbGetRows("SELECT * FROM email_templates WHERE status != 'deleted' ORDER BY name", []);
+    $templateCount = dbGetRow("SELECT COUNT(*) AS n FROM email_templates WHERE status != 'deleted'", [])['n'] ?? 0;
+    $listReport    = getReportByName('emails_list');
     ?>
     <?php if ($message): ?><div class="alert alert-success"><?= htmlspecialchars($message) ?></div><?php endif; ?>
     <?php if ($error):   ?><div class="alert alert-danger"><?= htmlspecialchars($error) ?></div><?php endif; ?>
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <span><?= count($templates) ?> template<?= count($templates) !== 1 ? 's' : '' ?></span>
+        <span><?= (int)$templateCount ?> template<?= $templateCount !== 1 ? 's' : '' ?></span>
         <a href="/admin/emails?action=add" class="btn btn-success btn-sm">+ Add Template</a>
     </div>
-    <table class="table table-striped table-hover">
-        <thead class="table-dark">
-            <tr>
-                <th>Name</th><th>Subject</th><th>From</th><th>Unsubscribe</th><th>Status</th><th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-        <?php foreach ($templates as $tpl): ?>
-            <tr>
-                <td>
-                    <strong><?= htmlspecialchars($tpl['name']) ?></strong>
-                    <?php if ($tpl['description']): ?><br><small class="text-muted"><?= htmlspecialchars($tpl['description']) ?></small><?php endif; ?>
-                </td>
-                <td><?= htmlspecialchars($tpl['subject']) ?></td>
-                <td><?= htmlspecialchars($tpl['from_address'] ?? '') ?></td>
-                <td><?= $tpl['allow_unsubscribe'] ? '<span class="badge bg-info text-dark">Yes</span>' : '<span class="badge bg-secondary">No</span>' ?></td>
-                <td>
-                    <span class="badge bg-<?= $tpl['status'] === 'active' ? 'success' : 'secondary' ?>">
-                        <?= htmlspecialchars($tpl['status']) ?>
-                    </span>
-                </td>
-                <td>
-                    <a href="/admin/emails?action=edit&id=<?= (int)$tpl['id'] ?>" class="btn btn-primary btn-sm">Edit</a>
-                    <form method="post" action="/admin/emails?action=delete&id=<?= (int)$tpl['id'] ?>" class="d-inline"
-                          onsubmit="return confirm('Delete template &quot;<?= htmlspecialchars(addslashes($tpl['name'])) ?>&quot;?')">
-                        <input type="hidden" name="action" value="delete">
-                        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
-                    </form>
-                </td>
-            </tr>
-        <?php endforeach; ?>
-        </tbody>
-    </table>
+    <?php if ($listReport): ?>
+        <?= renderReport($listReport) ?>
+    <?php else: ?>
+        <div class="alert alert-warning">Report <code>emails_list</code> not found. <a href="/admin/reports">Recreate it in Reports</a>.</div>
+    <?php endif; ?>
     <?php
 }
 

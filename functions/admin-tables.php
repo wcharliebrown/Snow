@@ -360,53 +360,19 @@ if ($action === 'add') {
         ['title' => 'Admin',         'url' => '/admin'],
         ['title' => 'Custom Tables', 'url' => '', 'current' => true],
     ];
-    $customTables = dbGetRows(
-        "SELECT ct.*, COUNT(ctf.id) AS field_count
-         FROM custom_tables ct
-         LEFT JOIN custom_table_fields ctf ON ct.table_name = ctf.table_name AND ctf.status = 'active'
-         GROUP BY ct.id
-         ORDER BY ct.display_name",
-        []
-    );
+    $tableCount = dbGetRow("SELECT COUNT(*) AS n FROM custom_tables", [])['n'] ?? 0;
+    $listReport = getReportByName('tables_list');
     ?>
     <?php if ($message): ?><div class="alert alert-success"><?= htmlspecialchars($message) ?></div><?php endif; ?>
     <?php if ($error):   ?><div class="alert alert-danger"><?= htmlspecialchars($error) ?></div><?php endif; ?>
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <span><?= count($customTables) ?> table<?= count($customTables) !== 1 ? 's' : '' ?></span>
+        <span><?= (int)$tableCount ?> table<?= $tableCount !== 1 ? 's' : '' ?></span>
         <a href="/admin/tables?action=add" class="btn btn-success btn-sm">+ Add Table</a>
     </div>
-    <?php if (empty($customTables)): ?>
-    <div class="alert alert-info">No custom table definitions yet.</div>
+    <?php if ($listReport): ?>
+        <?= renderReport($listReport) ?>
     <?php else: ?>
-    <table class="table table-striped table-hover">
-        <thead class="table-dark">
-            <tr><th>Table Name</th><th>Display Name</th><th>Description</th><th>Fields</th><th>Status</th><th>Actions</th></tr>
-        </thead>
-        <tbody>
-        <?php foreach ($customTables as $ct): ?>
-            <tr>
-                <td><code><?= htmlspecialchars($ct['table_name']) ?></code></td>
-                <td><?= htmlspecialchars($ct['display_name']) ?></td>
-                <td><?= htmlspecialchars($ct['description'] ?? '') ?></td>
-                <td><span class="badge bg-info text-dark"><?= (int)$ct['field_count'] ?></span></td>
-                <td>
-                    <span class="badge bg-<?= $ct['status'] === 'active' ? 'success' : 'secondary' ?>">
-                        <?= htmlspecialchars($ct['status']) ?>
-                    </span>
-                </td>
-                <td>
-                    <a href="/admin/tables?action=fields&id=<?= (int)$ct['id'] ?>" class="btn btn-info btn-sm">Fields</a>
-                    <a href="/admin/tables?action=edit&id=<?= (int)$ct['id'] ?>" class="btn btn-primary btn-sm">Edit</a>
-                    <form method="post" action="/admin/tables?action=delete&id=<?= (int)$ct['id'] ?>" class="d-inline"
-                          onsubmit="return confirm('Delete table definition &quot;<?= htmlspecialchars(addslashes($ct['display_name'])) ?>&quot;?')">
-                        <input type="hidden" name="action" value="delete">
-                        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
-                    </form>
-                </td>
-            </tr>
-        <?php endforeach; ?>
-        </tbody>
-    </table>
+        <div class="alert alert-warning">Report <code>tables_list</code> not found. <a href="/admin/reports">Recreate it in Reports</a>.</div>
     <?php endif; ?>
     <?php
 }

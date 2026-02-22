@@ -67,14 +67,8 @@ if (isset($_GET['msg'])) {
 
 // ── Data ──────────────────────────────────────────────────────────────────────
 
-$snapshots = dbGetRows(
-    "SELECT s.*, u.first_name, u.last_name
-     FROM snapshots s
-     LEFT JOIN users u ON s.created_by = u.id
-     WHERE s.status = 'active'
-     ORDER BY s.snapshot_date DESC",
-    []
-);
+$snapshotCount = dbGetRow("SELECT COUNT(*) AS n FROM snapshots WHERE status = 'active'", [])['n'] ?? 0;
+$listReport    = getReportByName('snapshots_list');
 
 // Tables list for the create form
 $tables = dbGetRows("SHOW TABLES", []);
@@ -119,36 +113,12 @@ ob_start();
 
 <!-- Snapshot list -->
 <div class="d-flex justify-content-between align-items-center mb-2">
-    <span><?= count($snapshots) ?> snapshot<?= count($snapshots) !== 1 ? 's' : '' ?></span>
+    <span><?= (int)$snapshotCount ?> snapshot<?= $snapshotCount !== 1 ? 's' : '' ?></span>
 </div>
-<?php if (empty($snapshots)): ?>
-<div class="alert alert-info">No snapshots recorded yet.</div>
+<?php if ($listReport): ?>
+    <?= renderReport($listReport) ?>
 <?php else: ?>
-<table class="table table-striped table-hover">
-    <thead class="table-dark">
-        <tr><th>Table</th><th>Snapshot Name</th><th>Description</th><th>Date</th><th>Rows</th><th>By</th><th>Actions</th></tr>
-    </thead>
-    <tbody>
-    <?php foreach ($snapshots as $s): ?>
-        <tr>
-            <td><code><?= htmlspecialchars($s['table_name']) ?></code></td>
-            <td><?= htmlspecialchars($s['snapshot_name']) ?></td>
-            <td><?= htmlspecialchars($s['description'] ?? '') ?></td>
-            <td><?= htmlspecialchars($s['snapshot_date']) ?></td>
-            <td><span class="badge bg-secondary"><?= number_format((int)$s['row_count']) ?></span></td>
-            <td><?= $s['first_name'] ? htmlspecialchars($s['first_name'] . ' ' . $s['last_name']) : '<span class="text-muted">—</span>' ?></td>
-            <td>
-                <form method="post" action="/admin/snapshots" class="d-inline"
-                      onsubmit="return confirm('Delete snapshot &quot;<?= htmlspecialchars(addslashes($s['snapshot_name'])) ?>&quot;?')">
-                    <input type="hidden" name="action" value="delete">
-                    <input type="hidden" name="id"     value="<?= (int)$s['id'] ?>">
-                    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
-                </form>
-            </td>
-        </tr>
-    <?php endforeach; ?>
-    </tbody>
-</table>
+    <div class="alert alert-warning">Report <code>snapshots_list</code> not found. <a href="/admin/reports">Recreate it in Reports</a>.</div>
 <?php endif; ?>
 <?php
 $page['content'] = ob_get_clean();

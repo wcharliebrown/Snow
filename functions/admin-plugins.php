@@ -85,7 +85,8 @@ if (isset($_GET['msg'])) {
 
 // ── Data ──────────────────────────────────────────────────────────────────────
 
-$plugins = dbGetRows("SELECT * FROM plugins ORDER BY name", []);
+$pluginCount = dbGetRow("SELECT COUNT(*) AS n FROM plugins", [])['n'] ?? 0;
+$listReport  = getReportByName('plugins_list');
 
 // ── Build content ─────────────────────────────────────────────────────────────
 
@@ -123,55 +124,13 @@ if (($_GET['action'] ?? '') === 'add'): ?>
     <?php if ($message): ?><div class="alert alert-success"><?= htmlspecialchars($message) ?></div><?php endif; ?>
     <?php if ($error):   ?><div class="alert alert-danger"><?= htmlspecialchars($error) ?></div><?php endif; ?>
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <span><?= count($plugins) ?> plugin<?= count($plugins) !== 1 ? 's' : '' ?></span>
+        <span><?= (int)$pluginCount ?> plugin<?= $pluginCount !== 1 ? 's' : '' ?></span>
         <a href="/admin/plugins?action=add" class="btn btn-success btn-sm">+ Register Plugin</a>
     </div>
-    <?php if (empty($plugins)): ?>
-    <div class="alert alert-info">No plugins registered.</div>
+    <?php if ($listReport): ?>
+        <?= renderReport($listReport) ?>
     <?php else: ?>
-    <table class="table table-striped table-hover">
-        <thead class="table-dark">
-            <tr><th>Name</th><th>Version</th><th>Author</th><th>Status</th><th>Installed</th><th>Actions</th></tr>
-        </thead>
-        <tbody>
-        <?php foreach ($plugins as $p): ?>
-            <tr>
-                <td>
-                    <strong><?= htmlspecialchars($p['name']) ?></strong>
-                    <?php if ($p['description']): ?><br><small class="text-muted"><?= htmlspecialchars($p['description']) ?></small><?php endif; ?>
-                </td>
-                <td><?= htmlspecialchars($p['version']) ?></td>
-                <td><?= htmlspecialchars($p['author'] ?? '') ?></td>
-                <td>
-                    <?php $badgeClass = match($p['status']) { 'active' => 'success', 'error' => 'danger', default => 'secondary' }; ?>
-                    <span class="badge bg-<?= $badgeClass ?>"><?= htmlspecialchars($p['status']) ?></span>
-                </td>
-                <td><?= $p['install_date'] ? htmlspecialchars($p['install_date']) : '<span class="text-muted">Never</span>' ?></td>
-                <td>
-                    <?php if ($p['status'] !== 'active'): ?>
-                    <form method="post" action="/admin/plugins" class="d-inline">
-                        <input type="hidden" name="action" value="activate">
-                        <input type="hidden" name="id"     value="<?= (int)$p['id'] ?>">
-                        <button type="submit" class="btn btn-success btn-sm">Activate</button>
-                    </form>
-                    <?php else: ?>
-                    <form method="post" action="/admin/plugins" class="d-inline">
-                        <input type="hidden" name="action" value="deactivate">
-                        <input type="hidden" name="id"     value="<?= (int)$p['id'] ?>">
-                        <button type="submit" class="btn btn-warning btn-sm">Deactivate</button>
-                    </form>
-                    <?php endif; ?>
-                    <form method="post" action="/admin/plugins" class="d-inline"
-                          onsubmit="return confirm('Delete plugin &quot;<?= htmlspecialchars(addslashes($p['name'])) ?>&quot;?')">
-                        <input type="hidden" name="action" value="delete">
-                        <input type="hidden" name="id"     value="<?= (int)$p['id'] ?>">
-                        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
-                    </form>
-                </td>
-            </tr>
-        <?php endforeach; ?>
-        </tbody>
-    </table>
+        <div class="alert alert-warning">Report <code>plugins_list</code> not found. <a href="/admin/reports">Recreate it in Reports</a>.</div>
     <?php endif; ?>
 <?php endif; ?>
 <?php
