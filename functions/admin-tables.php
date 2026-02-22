@@ -26,6 +26,123 @@ function getCustomTableFields(string $tableName): array {
     );
 }
 
+function fieldTypeToSQL(string $type): string {
+    $map = [
+        'varchar'  => 'VARCHAR(255)',
+        'text'     => 'TEXT',
+        'int'      => 'INT',
+        'decimal'  => 'DECIMAL(10,2)',
+        'date'     => 'DATE',
+        'datetime' => 'DATETIME',
+        'tinyint'  => 'TINYINT(1)',
+        'longtext' => 'LONGTEXT',
+    ];
+    return $map[$type] ?? 'VARCHAR(255)';
+}
+
+function generateCustomTableReport(string $tableName): void {
+    $ct = dbGetRow("SELECT * FROM custom_tables WHERE table_name = ?", [$tableName]);
+    if (!$ct) return;
+
+    $fields      = dbGetRows(
+        "SELECT * FROM custom_table_fields WHERE table_name = ? AND status = 'active' ORDER BY display_order, field_name",
+        [$tableName]
+    );
+    $displayName = $ct['display_name'];
+    $reportName  = $tableName . '_list';
+    $adminPath   = 'admin/data/' . $tableName;
+
+    // sql_fields
+    $sqlFieldParts = ['id'];
+    foreach ($fields as $f) {
+        if ($f['is_visible']) {
+            $sqlFieldParts[] = $f['field_name'];
+        }
+    }
+    $sqlFields = implode(",\n    ", $sqlFieldParts);
+
+    // html_header
+    $thCols = '<th>ID</th>';
+    foreach ($fields as $f) {
+        if ($f['is_visible']) {
+            $thCols .= '<th>' . htmlspecialchars($f['display_label']) . '</th>';
+        }
+    }
+    $thCols .= '<th>Actions</th>';
+    $htmlHeader = '<table class="table table-striped table-hover">' . "\n"
+        . '<thead class="table-dark">' . "\n"
+        . '<tr>' . $thCols . '</tr>' . "\n"
+        . '</thead><tbody>';
+
+    // html_row_template
+    $rowTds = '<td>{{id}}</td>';
+    foreach ($fields as $f) {
+        if ($f['is_visible']) {
+            $rowTds .= '<td>{{' . $f['field_name'] . '}}</td>';
+        }
+    }
+    $rowTds .= '<td><a href="/' . $adminPath . '?action=edit&amp;id={{id}}" class="btn btn-primary btn-sm">Edit</a></td>';
+
+    $existingReport = dbGetRow("SELECT id FROM report_templates WHERE name = ?", [$reportName]);
+    $reportData = [
+        'name'              => $reportName,
+        'description'       => $displayName . ' — custom table list view',
+        'sql_table'         => $tableName,
+        'sql_fields'        => $sqlFields,
+        'sql_where'         => null,
+        'sql_order'         => 'id DESC',
+        'rows_per_page'     => 50,
+        'output_format'     => 'html',
+        'html_header'       => $htmlHeader,
+        'html_row_template' => '<tr>' . $rowTds . '</tr>',
+        'html_footer'       => '</tbody></table>',
+        'status'            => 'active',
+    ];
+    if ($existingReport) {
+        $reportData['id'] = $existingReport['id'];
+    }
+    saveReport($reportData);
+}
+
+function provisionCustomTable(array $tableDef): void {
+    $tableName   = $tableDef['table_name'];
+    $displayName = $tableDef['display_name'];
+    $adminPath   = 'admin/data/' . $tableName;
+
+    // Create MySQL table
+    dbQuery("CREATE TABLE IF NOT EXISTS `{$tableName}` (
+        `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+    // Create admin page if not exists
+    $existingPage = dbGetRow("SELECT id FROM pages WHERE path = ?", [$adminPath]);
+    if (!$existingPage) {
+        savePage([
+            'title'               => $displayName,
+            'path'                => $adminPath,
+            'template_file'       => 'admin_page_template.html',
+            'custom_script'       => 'admin-custom-table.php',
+            'require_auth'        => 1,
+            'required_permission' => 'table_management',
+            'status'              => 'active',
+        ]);
+    }
+
+    // Create/update report
+    generateCustomTableReport($tableName);
+}
+
+function decommissionCustomTable(array $tableDef): void {
+    $tableName  = $tableDef['table_name'];
+    $adminPath  = 'admin/data/' . $tableName;
+    $reportName = $tableName . '_list';
+
+    dbUpdate('pages', ['status' => 'deleted'], 'path = ?', [$adminPath]);
+    dbUpdate('report_templates', ['status' => 'deleted'], 'name = ?', [$reportName]);
+}
+
 // ── Handle POST ───────────────────────────────────────────────────────────────
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -56,6 +173,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'status'       => $status,
                     'created_by'   => $currentUser['id'] ?? null,
                 ]);
+                provisionCustomTable(['table_name' => $tableName, 'display_name' => $displayName]);
                 header('Location: /admin/tables?msg=created');
                 exit;
             }
@@ -83,6 +201,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif ($postAction === 'delete' && $tableId) {
         $ct = getCustomTableById($tableId);
         if ($ct) {
+            decommissionCustomTable($ct);
             dbQuery("DELETE FROM custom_table_fields WHERE table_name = ?", [$ct['table_name']]);
             dbQuery("DELETE FROM custom_tables WHERE id = ?", [$tableId]);
         }
@@ -124,6 +243,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'default_value' => $defaultVal,
                     'status'        => 'active',
                 ]);
+                // Ensure MySQL table exists (for tables created before provisioning feature)
+                $tableExists = dbGetRow(
+                    "SELECT COUNT(*) AS n FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?",
+                    [$ct['table_name']]
+                );
+                if (!$tableExists || $tableExists['n'] == 0) {
+                    dbQuery("CREATE TABLE IF NOT EXISTS `{$ct['table_name']}` (
+                        `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                        `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                        `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+                }
+                // Add MySQL column if not already present
+                $colExists = dbGetRow(
+                    "SELECT COUNT(*) AS n FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?",
+                    [$ct['table_name'], $fieldName]
+                );
+                if (!$colExists || $colExists['n'] == 0) {
+                    $colDef = fieldTypeToSQL($fieldType);
+                    dbQuery("ALTER TABLE `{$ct['table_name']}` ADD COLUMN `{$fieldName}` {$colDef} NULL");
+                }
+                generateCustomTableReport($ct['table_name']);
                 header("Location: /admin/tables?action=fields&id=$tableId&msg=field_added");
                 exit;
             }
@@ -134,6 +275,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $fieldId = isset($_POST['field_id']) ? (int)$_POST['field_id'] : 0;
         if ($fieldId) {
             dbUpdate('custom_table_fields', ['status' => 'inactive'], 'id = ?', [$fieldId]);
+        }
+        $ctForReport = getCustomTableById($tableId);
+        if ($ctForReport) {
+            generateCustomTableReport($ctForReport['table_name']);
         }
         header("Location: /admin/tables?action=fields&id=$tableId&msg=field_deleted");
         exit;
