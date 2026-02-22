@@ -218,46 +218,20 @@ if ($action === 'add') {
         ['title' => 'Admin', 'url' => '/admin'],
         ['title' => 'Users', 'url' => '', 'current' => true],
     ];
-    $users = dbGetRows("SELECT * FROM users ORDER BY created_date DESC", []);
+    $userCount  = dbGetRow("SELECT COUNT(*) AS n FROM users", [])['n'] ?? 0;
+    $listReport = getReportByName('users_list');
     ?>
     <?php if ($message): ?><div class="alert alert-success"><?= htmlspecialchars($message) ?></div><?php endif; ?>
     <?php if ($error):   ?><div class="alert alert-danger"><?= htmlspecialchars($error) ?></div><?php endif; ?>
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <span><?= count($users) ?> user<?= count($users) !== 1 ? 's' : '' ?></span>
+        <span><?= (int)$userCount ?> user<?= $userCount !== 1 ? 's' : '' ?></span>
         <a href="/admin/users?action=add" class="btn btn-success btn-sm">+ Add User</a>
     </div>
-    <table class="table table-striped table-hover">
-        <thead class="table-dark">
-            <tr>
-                <th>ID</th><th>Name</th><th>Email</th><th>Status</th><th>Last Login</th><th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-        <?php foreach ($users as $u): ?>
-            <tr>
-                <td><?= (int)$u['id'] ?></td>
-                <td><?= htmlspecialchars($u['first_name'] . ' ' . $u['last_name']) ?></td>
-                <td><?= htmlspecialchars($u['email']) ?></td>
-                <td>
-                    <span class="badge bg-<?= $u['status'] === 'active' ? 'success' : ($u['status'] === 'suspended' ? 'warning' : 'secondary') ?>">
-                        <?= htmlspecialchars($u['status']) ?>
-                    </span>
-                </td>
-                <td><?= $u['last_login'] ? htmlspecialchars($u['last_login']) : '<span class="text-muted">Never</span>' ?></td>
-                <td>
-                    <a href="/admin/users?action=edit&id=<?= (int)$u['id'] ?>" class="btn btn-primary btn-sm">Edit</a>
-                    <?php if ((int)$u['id'] !== (int)($page['current_user']['id'] ?? 0)): ?>
-                    <form method="post" action="/admin/users?action=delete&id=<?= (int)$u['id'] ?>" class="d-inline"
-                          onsubmit="return confirm('Deactivate <?= htmlspecialchars(addslashes($u['first_name'])) ?>?')">
-                        <input type="hidden" name="action" value="delete">
-                        <button type="submit" class="btn btn-danger btn-sm">Deactivate</button>
-                    </form>
-                    <?php endif; ?>
-                </td>
-            </tr>
-        <?php endforeach; ?>
-        </tbody>
-    </table>
+    <?php if ($listReport): ?>
+        <?= renderReport($listReport) ?>
+    <?php else: ?>
+        <div class="alert alert-warning">Report <code>users_list</code> not found. <a href="/admin/reports">Recreate it in Reports</a>.</div>
+    <?php endif; ?>
     <?php
 }
 

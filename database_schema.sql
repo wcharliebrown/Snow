@@ -423,3 +423,28 @@ INSERT INTO report_templates (name, description, sql_table, sql_fields, sql_wher
     '</tbody></table>',
     'active'
 );
+
+-- Insert built-in report: users list (used by admin/users list view)
+INSERT INTO report_templates (name, description, sql_table, sql_fields, sql_where, sql_order, rows_per_page, output_format, html_header, html_row_template, html_footer, status) VALUES
+(
+    'users_list',
+    'All users — matches the admin/users list view',
+    'users',
+    'id,
+    CONCAT(first_name, '' '', last_name) AS full_name,
+    email,
+    CASE status WHEN ''active'' THEN ''<span class="badge bg-success">active</span>'' WHEN ''suspended'' THEN ''<span class="badge bg-warning">suspended</span>'' ELSE CONCAT(''<span class="badge bg-secondary">'', status, ''</span>'') END AS status_badge,
+    IFNULL(last_login, ''<span class="text-muted">Never</span>'') AS last_login_display',
+    NULL,
+    'created_date DESC',
+    50,
+    'html',
+    '<table class="table table-striped table-hover">
+<thead class="table-dark">
+<tr><th>ID</th><th>Name</th><th>Email</th><th>Status</th><th>Last Login</th><th>Actions</th></tr>
+</thead>
+<tbody>',
+    '<tr><td>{{id}}</td><td>{{full_name}}</td><td>{{email}}</td><td>{{status_badge}}</td><td>{{last_login_display}}</td><td><a href="/admin/users?action=edit&amp;id={{id}}" class="btn btn-primary btn-sm">Edit</a></td></tr>',
+    '</tbody></table>',
+    'active'
+);
