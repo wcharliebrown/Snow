@@ -29,7 +29,15 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. Admin can view active sessions in the admin and force-logout any session
   3. Admin can configure minimum password length, maximum age, and reuse prevention; users are prompted to change expired or reused passwords
   4. Admin can query the activity log by event type (login, error, outbound email) and see structured entries with timestamps and user context
-**Plans**: TBD
+**Plans**: 6 plans
+
+Plans:
+- [ ] 01-01-PLAN.md — DB schema migration (sessions, activity_log, password_policy, password_history tables)
+- [ ] 01-02-PLAN.md — DB-backed session handler (SnowSessionHandler) + session fixation prevention
+- [ ] 01-03-PLAN.md — Password policy functions + enforcement in auth.php and admin-users.php
+- [ ] 01-04-PLAN.md — CSRF protection (csrf.php + central enforcement + form injection)
+- [ ] 01-05-PLAN.md — DB activity logging (logging.php + admin-logs.php update)
+- [ ] 01-06-PLAN.md — Admin UI: session viewer + password policy config form
 
 ### Phase 2: Access Control
 **Goal**: Every managed table row has view and edit group controls; only users in matching groups can see or modify a row; the provisioner adds these controls to every new table automatically.
@@ -83,7 +91,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Security Foundations | 0/TBD | Not started | - |
+| 1. Security Foundations | 0/6 | Not started | - |
 | 2. Access Control | 0/TBD | Not started | - |
 | 3. Data Integrity | 0/TBD | Not started | - |
 | 4. Extensibility | 0/TBD | Not started | - |
