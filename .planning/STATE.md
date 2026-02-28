@@ -10,27 +10,27 @@ See: .planning/PROJECT.md (updated 2026-02-27)
 ## Current Position
 
 Phase: 1 of 5 (Security Foundations)
-Plan: 0 of TBD in current phase
-Status: Ready to plan
-Last activity: 2026-02-27 — Roadmap created, all 21 v1 requirements mapped to 5 phases
+Plan: 1 of TBD in current phase
+Status: Executing
+Last activity: 2026-02-28 — Plan 01-01 complete: Phase 1 security DB tables created and applied
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [█░░░░░░░░░] 5%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 0
-- Average duration: —
-- Total execution time: 0 hours
+- Total plans completed: 1
+- Average duration: 20 min
+- Total execution time: 0.3 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| - | - | - | - |
+| 01-security-foundations | 1 | 20 min | 20 min |
 
 **Recent Trend:**
-- Last 5 plans: —
+- Last 5 plans: 01-01 (20 min)
 - Trend: —
 
 *Updated after each plan completion*
@@ -45,10 +45,13 @@ Recent decisions affecting current work:
 - Roadmap: 5 phases derived from dependency graph — sessions before ACL, ACL before versioning, hooks before 2FA
 - Research: Phase 3 (snapshot restore) and Phase 4 (TOTP) flagged for deeper research during planning; Phases 1, 2, 5 have standard patterns, skip research
 - Security: Audit custom table provisioner column name validation in Phase 1 (PITFALL-A06 — already shipped code)
+- DB schema (01-01): ALTER TABLE ADD COLUMN IF NOT EXISTS is MariaDB-only syntax — MySQL 8.0 requires PREPARE/EXECUTE conditional guard via INFORMATION_SCHEMA check
+- DB schema (01-01): LONGTEXT/TEXT/BLOB columns cannot have DEFAULT values in MySQL 8.0 strict mode
+- DB schema (01-01): Docker stack started as part of plan execution; .env created from .env.example with docker-compose credentials
 
 ### Pending Todos
 
-None yet.
+None.
 
 ### Blockers/Concerns
 
@@ -58,6 +61,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-02-27
-Stopped at: Roadmap created and written to disk; REQUIREMENTS.md traceability updated; ready to plan Phase 1
+Last session: 2026-02-28
+Stopped at: Completed 01-01-PLAN.md — Phase 1 security DB tables applied; ready for Plan 01-02
 Resume file: None

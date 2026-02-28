@@ -32,7 +32,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 6 plans
 
 Plans:
-- [ ] 01-01-PLAN.md — DB schema migration (sessions, activity_log, password_policy, password_history tables)
+- [x] 01-01-PLAN.md — DB schema migration (sessions, activity_log, password_policy, password_history tables)
 - [ ] 01-02-PLAN.md — DB-backed session handler (SnowSessionHandler) + session fixation prevention
 - [ ] 01-03-PLAN.md — Password policy functions + enforcement in auth.php and admin-users.php
 - [ ] 01-04-PLAN.md — CSRF protection (csrf.php + central enforcement + form injection)
@@ -91,7 +91,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Security Foundations | 0/6 | Not started | - |
+| 1. Security Foundations | 1/6 | In progress | - |
 | 2. Access Control | 0/TBD | Not started | - |
 | 3. Data Integrity | 0/TBD | Not started | - |
 | 4. Extensibility | 0/TBD | Not started | - |
