@@ -627,3 +627,83 @@ INSERT INTO report_templates (name, description, sql_table, sql_fields, sql_wher
     '</tbody></table>',
     'active'
 );
+
+-- =============================================================================
+-- Phase 1 Security Foundations — migration (2026-02-28)
+-- =============================================================================
+
+-- Sessions table — DB-backed session storage (SEC-02)
+CREATE TABLE IF NOT EXISTS sessions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    session_id VARCHAR(128) NOT NULL UNIQUE,
+    user_id INT NULL,
+    data LONGTEXT NOT NULL,
+    ip_address VARCHAR(45) NULL,
+    user_agent VARCHAR(255) NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    expires_at DATETIME NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
+    INDEX idx_session_id (session_id),
+    INDEX idx_user_id (user_id),
+    INDEX idx_expires_at (expires_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Activity log table — structured DB logging (SEC-04)
+CREATE TABLE IF NOT EXISTS activity_log (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    level VARCHAR(20) NOT NULL,
+    event_type VARCHAR(50) NOT NULL,
+    message TEXT NOT NULL,
+    user_id INT NULL,
+    session_id VARCHAR(128) NULL,
+    ip_address VARCHAR(45) NULL,
+    context JSON NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
+    INDEX idx_level (level),
+    INDEX idx_event_type (event_type),
+    INDEX idx_user_id (user_id),
+    INDEX idx_created_at (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Password policy config table — one-row config (SEC-03)
+CREATE TABLE IF NOT EXISTS password_policy (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    min_length INT NOT NULL DEFAULT 8,
+    max_age_days INT NOT NULL DEFAULT 0,
+    prevent_reuse_count INT NOT NULL DEFAULT 0,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    updated_by INT NULL,
+    FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Seed default policy row so getPasswordPolicy() always has data
+INSERT INTO password_policy (min_length, max_age_days, prevent_reuse_count)
+SELECT 8, 0, 0 WHERE NOT EXISTS (SELECT 1 FROM password_policy LIMIT 1);
+
+-- Password history table — previous hashes for reuse prevention (SEC-03)
+CREATE TABLE IF NOT EXISTS password_history (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_user_id (user_id),
+    INDEX idx_created_at (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Add password_changed_at to users for password age tracking (SEC-03)
+-- Conditional guard: only adds column if it does not already exist (MySQL 8.0 compatible)
+SET @col_exists = (
+    SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE()
+    AND TABLE_NAME = 'users'
+    AND COLUMN_NAME = 'password_changed_at'
+);
+SET @sql = IF(@col_exists = 0,
+    'ALTER TABLE users ADD COLUMN password_changed_at DATETIME NULL AFTER last_login',
+    'SELECT 1'
+);
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
