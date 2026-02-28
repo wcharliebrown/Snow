@@ -51,163 +51,188 @@ function logEmail($to, $subject, $template = '') {
 }
 
 /**
- * Generic logging function
+ * Generic logging function — writes to activity_log DB table (SEC-04).
+ * Falls back to flat file if DB is unavailable. Never calls logError() internally
+ * (would cause recursive loop if DB is down — see PITFALL-4).
  */
-function logMessage($level, $message) {
-    $logFile = (defined('SNOW_LOGS') ? SNOW_LOGS : dirname(__DIR__) . '/logs') . '/' . strtolower($level) . '.log';
+function logMessage($level, $message, array $context = []) {
+    // --- DB logging (primary path) ---
+    try {
+        // Only attempt DB if getDbConnection is available and DB is reachable.
+        // Do NOT call getDbConnection() if we're already inside a DB error handler.
+        if (function_exists('getDbConnection')) {
+            $db = getDbConnection();
+            $stmt = $db->prepare(
+                "INSERT INTO activity_log
+                    (level, event_type, message, user_id, session_id, ip_address, context)
+                 VALUES (?, ?, ?, ?, ?, ?, ?)"
+            );
+            $userId    = function_exists('getCurrentUserId') ? getCurrentUserId() : null;
+            $sessionId = (function_exists('session_status') && session_status() === PHP_SESSION_ACTIVE)
+                         ? session_id()
+                         : null;
+            $ip        = $_SERVER['REMOTE_ADDR'] ?? null;
+            $eventType = strtolower($level);
+
+            $stmt->execute([
+                strtoupper($level),
+                $eventType,
+                $message,
+                $userId,
+                $sessionId,
+                $ip,
+                !empty($context) ? json_encode($context) : null,
+            ]);
+            // DB write succeeded — flat-file write below acts as secondary audit trail
+        }
+    } catch (Exception $e) {
+        // DB unavailable — fall through to flat-file below.
+        // IMPORTANT: Do NOT call logError() here — that would recurse.
+        // Silence the exception and write to file directly.
+    }
+
+    // --- Flat-file logging (always runs; acts as fallback and secondary trail) ---
+    $logDir = defined('SNOW_LOGS') ? SNOW_LOGS : dirname(__DIR__) . '/logs';
+    $logFile = $logDir . '/snow.log';
+
     $timestamp = date('Y-m-d H:i:s');
-    $userId = function_exists('getCurrentUserId') ? getCurrentUserId() : 'system';
-    $sessionId = session_id() ?? 'no_session';
-    
+    $fileUserId    = function_exists('getCurrentUserId') ? (getCurrentUserId() ?? 'system') : 'system';
+    $fileSessionId = (function_exists('session_status') && session_status() === PHP_SESSION_ACTIVE)
+                 ? session_id()
+                 : 'no_session';
+
     $logEntry = sprintf(
         "[%s] [%s] [User:%s] [Session:%s] %s\n",
         $timestamp,
-        $level,
-        $userId,
-        $sessionId,
+        strtoupper($level),
+        $fileUserId,
+        $fileSessionId,
         $message
     );
-    
-    // Create log directory if it doesn't exist
-    if (!is_dir(SNOW_LOGS)) {
-        mkdir(SNOW_LOGS, 0755, true);
+
+    if (!is_dir($logDir)) {
+        @mkdir($logDir, 0755, true);
     }
-    
-    // Write to log file
-    file_put_contents($logFile, $logEntry, FILE_APPEND | LOCK_EX);
-    
-    // Also write to main log file
-    $mainLogFile = SNOW_LOGS . '/snow.log';
-    file_put_contents($mainLogFile, $logEntry, FILE_APPEND | LOCK_EX);
+
+    @file_put_contents($logFile, $logEntry, FILE_APPEND | LOCK_EX);
+
+    // Also write to level-specific file (preserves existing behavior for log parsing tools)
+    $levelFile = $logDir . '/' . strtolower($level) . '.log';
+    @file_put_contents($levelFile, $logEntry, FILE_APPEND | LOCK_EX);
 }
 
 /**
- * Get log entries
+ * Get log entries from activity_log table (replaces flat-file parsing).
+ * Returns entries newest-first.
  */
 function getLogEntries($level = null, $limit = 100, $offset = 0) {
-    $logFile = SNOW_LOGS . '/snow.log';
-    
-    if (!file_exists($logFile)) {
-        return [];
-    }
-    
-    $lines = file($logFile, FILE_IGNORE_NEW_LINES);
-    $entries = [];
-    
-    // Reverse array to get newest first
-    $lines = array_reverse($lines);
-    
-    foreach ($lines as $line) {
-        if (empty($line)) continue;
-        
-        // Parse log entry
-        if (preg_match('/^\[([^\]]+)\] \[([^\]]+)\] \[User:([^\]]*)\] \[Session:([^\]]*)\] (.+)$/', $line, $matches)) {
-            $entry = [
-                'timestamp' => $matches[1],
-                'level' => $matches[2],
-                'user_id' => $matches[3],
-                'session_id' => $matches[4],
-                'message' => $matches[5]
-            ];
-            
-            // Filter by level if specified
-            if ($level && $entry['level'] !== $level) {
-                continue;
-            }
-            
-            $entries[] = $entry;
+    try {
+        $sql = "SELECT al.id, al.level, al.event_type, al.message,
+                       al.user_id, al.session_id, al.ip_address, al.context,
+                       al.created_at,
+                       CONCAT(u.first_name, ' ', u.last_name) AS user_name,
+                       u.email AS user_email
+                FROM activity_log al
+                LEFT JOIN users u ON al.user_id = u.id";
+
+        $params = [];
+        if ($level) {
+            $sql .= " WHERE al.level = ?";
+            $params[] = strtoupper($level);
         }
+
+        $sql .= " ORDER BY al.created_at DESC LIMIT ? OFFSET ?";
+        $params[] = (int)$limit;
+        $params[] = (int)$offset;
+
+        return dbGetRows($sql, $params);
+    } catch (Exception $e) {
+        return [];  // Return empty on DB failure — do not recurse into logError
     }
-    
-    // Apply pagination
-    return array_slice($entries, $offset, $limit);
 }
 
 /**
- * Search log entries
+ * Search log entries in activity_log table.
  */
 function searchLogEntries($searchTerm, $level = null, $limit = 100, $offset = 0) {
-    $entries = getLogEntries($level, $limit * 2, $offset);
-    $results = [];
-    
-    foreach ($entries as $entry) {
-        if (stripos($entry['message'], $searchTerm) !== false ||
-            stripos($entry['user_id'], $searchTerm) !== false ||
-            stripos($entry['session_id'], $searchTerm) !== false) {
-            $results[] = $entry;
+    try {
+        $like = '%' . $searchTerm . '%';
+        $sql = "SELECT al.id, al.level, al.event_type, al.message,
+                       al.user_id, al.session_id, al.ip_address, al.context,
+                       al.created_at,
+                       CONCAT(u.first_name, ' ', u.last_name) AS user_name,
+                       u.email AS user_email
+                FROM activity_log al
+                LEFT JOIN users u ON al.user_id = u.id
+                WHERE (al.message LIKE ? OR al.ip_address LIKE ?
+                       OR u.email LIKE ? OR u.first_name LIKE ?)";
+
+        $params = [$like, $like, $like, $like];
+
+        if ($level) {
+            $sql .= " AND al.level = ?";
+            $params[] = strtoupper($level);
         }
+
+        $sql .= " ORDER BY al.created_at DESC LIMIT ? OFFSET ?";
+        $params[] = (int)$limit;
+        $params[] = (int)$offset;
+
+        return dbGetRows($sql, $params);
+    } catch (Exception $e) {
+        return [];
     }
-    
-    return array_slice($results, 0, $limit);
 }
 
 /**
- * Clear log files
+ * Clear log entries from activity_log table (and flat-log files).
  */
 function clearLogs($level = null) {
-    if ($level) {
-        $logFile = SNOW_LOGS . '/' . strtolower($level) . '.log';
-        if (file_exists($logFile)) {
-            unlink($logFile);
+    // Clear DB log entries
+    try {
+        if ($level) {
+            dbQuery("DELETE FROM activity_log WHERE level = ?", [strtoupper($level)]);
+        } else {
+            dbQuery("DELETE FROM activity_log");
         }
+    } catch (Exception $e) {
+        // Ignore DB failure
+    }
+
+    // Also clear flat-log files (legacy cleanup)
+    $logDir = defined('SNOW_LOGS') ? SNOW_LOGS : dirname(__DIR__) . '/logs';
+    if ($level) {
+        $logFile = $logDir . '/' . strtolower($level) . '.log';
+        if (file_exists($logFile)) { @unlink($logFile); }
     } else {
-        // Clear all log files
-        $logFiles = glob(SNOW_LOGS . '/*.log');
-        foreach ($logFiles as $file) {
-            unlink($file);
+        $logFiles = glob($logDir . '/*.log');
+        if ($logFiles) {
+            foreach ($logFiles as $file) { @unlink($file); }
         }
     }
-    
+
     return true;
 }
 
 /**
- * Get log statistics
+ * Get log statistics from activity_log table.
  */
 function getLogStats() {
-    $stats = [
-        'total_entries' => 0,
-        'error_count' => 0,
-        'info_count' => 0,
-        'traffic_count' => 0,
-        'email_count' => 0,
-        'last_entry' => null
-    ];
-    
-    $logFile = SNOW_LOGS . '/snow.log';
-    if (!file_exists($logFile)) {
-        return $stats;
+    try {
+        $sql = "SELECT
+                    COUNT(*) AS total_entries,
+                    SUM(CASE WHEN level = 'ERROR' THEN 1 ELSE 0 END) AS error_count,
+                    SUM(CASE WHEN level = 'INFO' THEN 1 ELSE 0 END) AS info_count,
+                    SUM(CASE WHEN level = 'TRAFFIC' THEN 1 ELSE 0 END) AS traffic_count,
+                    SUM(CASE WHEN level = 'EMAIL' THEN 1 ELSE 0 END) AS email_count,
+                    MAX(created_at) AS last_entry
+                FROM activity_log";
+        $row = dbGetRow($sql);
+        return $row ?: ['total_entries' => 0, 'error_count' => 0, 'info_count' => 0,
+                        'traffic_count' => 0, 'email_count' => 0, 'last_entry' => null];
+    } catch (Exception $e) {
+        return ['total_entries' => 0, 'error_count' => 0, 'info_count' => 0,
+                'traffic_count' => 0, 'email_count' => 0, 'last_entry' => null];
     }
-    
-    $lines = file($logFile, FILE_IGNORE_NEW_LINES);
-    
-    foreach ($lines as $line) {
-        if (empty($line)) continue;
-        
-        if (preg_match('/^\[([^\]]*)\] \[([^\]]*)\]/', $line, $matches)) {
-            $level = $matches[2];
-            $timestamp = $matches[1];
-            
-            $stats['total_entries']++;
-            $stats['last_entry'] = $timestamp;
-            
-            switch ($level) {
-                case 'ERROR':
-                    $stats['error_count']++;
-                    break;
-                case 'INFO':
-                    $stats['info_count']++;
-                    break;
-                case 'TRAFFIC':
-                    $stats['traffic_count']++;
-                    break;
-                case 'EMAIL':
-                    $stats['email_count']++;
-                    break;
-            }
-        }
-    }
-    
-    return $stats;
 }
 ?>
