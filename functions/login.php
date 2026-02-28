@@ -4,6 +4,7 @@
  */
 
 // Set page data first
+$page['csrf_field'] = csrfField();
 $page['site_name'] = getenv('SITE_NAME') ?: 'Snow Framework';
 $page['title'] = 'Login';
 $page['content'] = ''; // Content will be rendered by template
