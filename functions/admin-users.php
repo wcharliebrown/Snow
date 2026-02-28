@@ -3,6 +3,8 @@
  * Admin - User Management
  */
 
+require_once __DIR__ . '/password-policy.php';
+
 requirePermission('user_management');
 
 $page['site_name']    = getenv('SITE_NAME') ?: 'Snow Framework';
@@ -31,9 +33,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $error = 'All fields are required.';
         } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $error = 'Invalid email address.';
-        } elseif (strlen($password) < 8) {
-            $error = 'Password must be at least 8 characters.';
         } else {
+            $strengthErrors = validatePasswordStrength($password);
+            if (!empty($strengthErrors)) {
+                $errors = $strengthErrors;
+                $error = implode(' ', $errors);
+            }
+        }
+        if (!$error) {
             $existing = dbGetRow("SELECT id FROM users WHERE email = ?", [$email]);
             if ($existing) {
                 $error = 'A user with that email already exists.';
@@ -75,8 +82,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'status'     => $status,
                 ];
                 if ($newPass !== '') {
-                    if (strlen($newPass) < 8) {
-                        $error = 'New password must be at least 8 characters.';
+                    $strengthErrors = validatePasswordStrength($newPass);
+                    if (!empty($strengthErrors)) {
+                        $error = implode(' ', $strengthErrors);
                     } else {
                         $fields['password_hash'] = password_hash($newPass, PASSWORD_DEFAULT);
                     }
@@ -149,7 +157,7 @@ if ($action === 'add') {
             </div>
             <div class="col-md-6">
                 <label class="form-label">Password</label>
-                <input type="password" name="password" class="form-control" minlength="8" required>
+                <input type="password" name="password" class="form-control" minlength="<?= (int)getPasswordPolicy()['min_length'] ?>" required>
             </div>
         </div>
         <div class="mt-3">
@@ -199,7 +207,7 @@ if ($action === 'add') {
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">New Password <small class="text-muted">(leave blank to keep current)</small></label>
-                    <input type="password" name="password" class="form-control" minlength="8">
+                    <input type="password" name="password" class="form-control" minlength="<?= (int)getPasswordPolicy()['min_length'] ?>">
                 </div>
             </div>
             <div class="mt-3">
