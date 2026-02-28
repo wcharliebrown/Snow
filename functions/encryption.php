@@ -321,29 +321,4 @@ function generatePasswordResetToken() {
     return generateSecureToken(32) . '-' . time();
 }
 
-/**
- * Validate password strength
- */
-function validatePasswordStrength($password) {
-    $minLength = getenv('PASSWORD_MIN_LENGTH') ?: 8;
-    $errors = [];
-    
-    if (strlen($password) < $minLength) {
-        $errors[] = "Password must be at least $minLength characters long";
-    }
-    
-    if (!preg_match('/[A-Z]/', $password)) {
-        $errors[] = "Password must contain at least one uppercase letter";
-    }
-    
-    if (!preg_match('/[a-z]/', $password)) {
-        $errors[] = "Password must contain at least one lowercase letter";
-    }
-    
-    if (!preg_match('/[0-9]/', $password)) {
-        $errors[] = "Password must contain at least one number";
-    }
-    
-    return $errors;
-}
 ?>

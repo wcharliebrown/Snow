@@ -30,6 +30,9 @@ services:
     environment:
       # Override .env values for Docker networking
       DB_HOST: mysql
+      DB_NAME: snow
+      DB_USER: snow_user
+      DB_PASS: snow_password
       RUNNING_IN_DOCKER: "1"
     networks:
       - snow_network
