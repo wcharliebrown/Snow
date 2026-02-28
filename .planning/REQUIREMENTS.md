@@ -12,7 +12,7 @@ Requirements for initial release. Each maps to a roadmap phase.
 - [x] **SEC-01**: System automatically applies CSRF protection to all POST forms
 - [x] **SEC-02**: Sessions are stored in MySQL (DB-backed SessionHandlerInterface with SELECT FOR UPDATE locking)
 - [x] **SEC-03**: Admin can configure password policy (minimum length, maximum age, reuse control)
-- [ ] **SEC-04**: System logs logins, errors, and outbound emails to database (multi-level, structured)
+- [x] **SEC-04**: System logs logins, errors, and outbound emails to database (multi-level, structured)
 - [ ] **SEC-05**: User can complete login using a short-term 6-digit code sent to their email address (2FA)
 
 ### Access Control
@@ -79,7 +79,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SEC-01 | Phase 1 | Complete |
 | SEC-02 | Phase 1 | Complete |
 | SEC-03 | Phase 1 | Complete |
-| SEC-04 | Phase 1 | Pending |
+| SEC-04 | Phase 1 | Complete |
 | SEC-05 | Phase 4 | Pending |
 | ACL-01 | Phase 2 | Pending |
 | ACL-02 | Phase 2 | Pending |

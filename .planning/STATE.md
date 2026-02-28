@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-02-28T16:27:00.000Z"
+last_updated: "2026-02-28T18:19:00.000Z"
 progress:
   total_phases: 1
   completed_phases: 0
   total_plans: 6
-  completed_plans: 4
+  completed_plans: 5
 ---
 
 # Project State
@@ -23,27 +23,27 @@ See: .planning/PROJECT.md (updated 2026-02-27)
 ## Current Position
 
 Phase: 1 of 5 (Security Foundations)
-Plan: 4 of TBD in current phase
+Plan: 5 of 6 in current phase
 Status: Executing
-Last activity: 2026-02-28 — Plan 01-04 complete: Per-session CSRF protection with central enforcement in renderPage() and csrfField() across all POST forms
+Last activity: 2026-02-28 — Plan 01-05 complete: DB-backed structured logging via activity_log table with flat-file fallback; admin log viewer updated with user/IP context and event_type filter
 
-Progress: [████░░░░░░] 20%
+Progress: [█████░░░░░] 83%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 4
-- Average duration: 9.8 min
-- Total execution time: 0.65 hours
+- Total plans completed: 5
+- Average duration: 10.6 min
+- Total execution time: 0.88 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 01-security-foundations | 4 | 38 min | 9.5 min |
+| 01-security-foundations | 5 | 53 min | 10.6 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (20 min), 01-02 (5 min), 01-03 (3 min), 01-04 (10 min)
+- Last 5 plans: 01-01 (20 min), 01-02 (5 min), 01-03 (3 min), 01-04 (10 min), 01-05 (15 min)
 - Trend: Stable
 
 *Updated after each plan completion*
@@ -71,6 +71,9 @@ Recent decisions affecting current work:
 - [Phase 01-04]: Per-session CSRF tokens (not per-request) — avoids back-button and multi-tab breakage in traditional PHP form apps
 - [Phase 01-04]: Central enforcement in renderPage() before custom_script include — one insertion protects every page in the framework
 - [Phase 01-04]: csrfField() extended to all POST forms in codebase (beyond plan's explicit list) per plan's grep-all-forms instruction
+- [Phase 01-05]: Flat-file write runs unconditionally alongside DB write — provides audit redundancy even when DB is healthy
+- [Phase 01-05]: logMessage() catch block uses @file_put_contents directly, never calls logError() — eliminates recursion risk when DB is down (PITFALL-4)
+- [Phase 01-05]: EMAIL badge colour set to success (green) rather than warning (yellow) to distinguish from TRAFFIC (grey)
 
 ### Pending Todos
 
@@ -85,5 +88,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-28
-Stopped at: Completed 01-04-PLAN.md — CSRF protection with central enforcement and all POST forms covered; ready for Plan 01-05
+Stopped at: Completed 01-05-PLAN.md — DB-backed structured logging (activity_log) with flat-file fallback; admin log viewer with user/IP context; ready for Plan 01-06
 Resume file: None
