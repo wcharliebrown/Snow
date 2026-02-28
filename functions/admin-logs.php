@@ -1,6 +1,7 @@
 <?php
 /**
  * Admin - Log Viewer
+ * Queries activity_log table via getLogEntries() / searchLogEntries() / getLogStats() (SEC-04).
  */
 
 requirePermission('log_viewing');
@@ -23,11 +24,12 @@ $error   = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'clear') {
     $clearLevel = $_POST['level'] ?? null;
-    // Validate level to prevent path traversal
-    $validLevels = ['error', 'info', 'traffic', 'email', null];
-    if (in_array($clearLevel, $validLevels, true)) {
-        clearLogs($clearLevel ?: null);
-        $message = $clearLevel ? ucfirst($clearLevel) . ' log cleared.' : 'All logs cleared.';
+    // Validate level values match activity_log.level column values
+    $validClearLevels = ['ERROR', 'INFO', 'TRAFFIC', 'EMAIL', null];
+    $clearLevelNorm = $clearLevel ? strtoupper($clearLevel) : null;
+    if (in_array($clearLevelNorm, $validClearLevels, true)) {
+        clearLogs($clearLevelNorm ?: null);
+        $message = $clearLevelNorm ? ucfirst(strtolower($clearLevelNorm)) . ' log cleared.' : 'All logs cleared.';
     }
 }
 
@@ -35,19 +37,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'clear
 
 $filterLevel  = $_GET['level'] ?? null;
 $searchTerm   = trim($_GET['q'] ?? '');
-$validLevels  = ['ERROR', 'INFO', 'TRAFFIC', 'EMAIL'];
+$page_num     = max(1, (int)($_GET['page'] ?? 1));
+$limit        = 100;
+$offset       = ($page_num - 1) * $limit;
+
+// Valid event_type values match activity_log.level column
+$validLevels  = ['ERROR', 'INFO', 'EMAIL', 'TRAFFIC'];
 if ($filterLevel && !in_array(strtoupper($filterLevel), $validLevels)) {
     $filterLevel = null;
 }
+$filterLevelUpper = $filterLevel ? strtoupper($filterLevel) : null;
 
 // ── Fetch entries ─────────────────────────────────────────────────────────────
 
 $stats = getLogStats();
 
 if ($searchTerm) {
-    $entries = searchLogEntries($searchTerm, $filterLevel ? strtoupper($filterLevel) : null, 200);
+    $entries = searchLogEntries($searchTerm, $filterLevelUpper, $limit, $offset);
 } else {
-    $entries = getLogEntries($filterLevel ? strtoupper($filterLevel) : null, 200);
+    $entries = getLogEntries($filterLevelUpper, $limit, $offset);
 }
 
 // ── Build content ─────────────────────────────────────────────────────────────
@@ -96,7 +104,7 @@ ob_start();
 <!-- Filter bar -->
 <form method="get" action="/admin/logs" class="row g-2 mb-3">
     <div class="col-sm-4">
-        <input type="text" name="q" class="form-control form-control-sm" placeholder="Search messages…" value="<?= htmlspecialchars($searchTerm) ?>">
+        <input type="text" name="q" class="form-control form-control-sm" placeholder="Search messages, user, IP…" value="<?= htmlspecialchars($searchTerm) ?>">
     </div>
     <div class="col-sm-3">
         <select name="level" class="form-select form-select-sm">
@@ -138,24 +146,50 @@ ob_start();
 <p class="text-muted small">Showing <?= count($entries) ?> entries (newest first).</p>
 <table class="table table-sm table-striped table-hover font-monospace small">
     <thead class="table-dark">
-        <tr><th style="width:160px">Timestamp</th><th style="width:80px">Level</th><th style="width:80px">User</th><th>Message</th></tr>
+        <tr>
+            <th style="width:160px">Timestamp</th>
+            <th style="width:80px">Level</th>
+            <th style="width:80px">Event Type</th>
+            <th style="width:160px">User</th>
+            <th style="width:120px">IP Address</th>
+            <th>Message</th>
+        </tr>
     </thead>
     <tbody>
     <?php foreach ($entries as $e): ?>
         <?php
-        $badgeClass = match(strtoupper($e['level'])) {
+        $badgeClass = match(strtoupper($e['level'] ?? '')) {
             'ERROR'   => 'danger',
             'INFO'    => 'info',
             'TRAFFIC' => 'secondary',
-            'EMAIL'   => 'warning',
+            'EMAIL'   => 'success',
             default   => 'light',
         };
+        // User display: show name + email if available, else "System"
+        if (!empty($e['user_name']) && trim($e['user_name']) !== ' ') {
+            $userDisplay = htmlspecialchars(trim($e['user_name']));
+            if (!empty($e['user_email'])) {
+                $userDisplay .= '<br><small class="text-muted">' . htmlspecialchars($e['user_email']) . '</small>';
+            }
+        } else {
+            $userDisplay = '<span class="text-muted">System</span>';
+        }
         ?>
         <tr>
-            <td class="text-nowrap"><?= htmlspecialchars($e['timestamp']) ?></td>
-            <td><span class="badge bg-<?= $badgeClass ?>"><?= htmlspecialchars($e['level']) ?></span></td>
-            <td><?= htmlspecialchars($e['user_id'] ?: '-') ?></td>
-            <td style="word-break:break-all"><?= htmlspecialchars($e['message']) ?></td>
+            <td class="text-nowrap"><?= htmlspecialchars($e['created_at'] ?? '') ?></td>
+            <td><span class="badge bg-<?= $badgeClass ?>"><?= htmlspecialchars($e['level'] ?? '') ?></span></td>
+            <td><?= htmlspecialchars($e['event_type'] ?? '') ?></td>
+            <td><?= $userDisplay ?></td>
+            <td><?= htmlspecialchars($e['ip_address'] ?? '-') ?></td>
+            <td style="word-break:break-all">
+                <?= htmlspecialchars($e['message'] ?? '') ?>
+                <?php if (!empty($e['context'])): ?>
+                <details class="mt-1">
+                    <summary class="text-muted small" style="cursor:pointer">Context</summary>
+                    <pre class="small mt-1 p-1 bg-light rounded" style="font-size:0.7rem;white-space:pre-wrap"><?= htmlspecialchars(json_encode(json_decode($e['context']), JSON_PRETTY_PRINT)) ?></pre>
+                </details>
+                <?php endif; ?>
+            </td>
         </tr>
     <?php endforeach; ?>
     </tbody>
