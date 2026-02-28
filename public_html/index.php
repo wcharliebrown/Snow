@@ -66,10 +66,20 @@ function autoloadFunctions($className) {
 function initializeFramework() {
     // Load configuration
     loadConfig();
-    
+
     // Set up autoloader
     spl_autoload_register('autoloadFunctions');
-    
+
+    // Load logging and database early — required by session handler below
+    require_once SNOW_FUNCTIONS . '/logging.php';
+    require_once SNOW_FUNCTIONS . '/database.php';
+
+    // Register DB session handler (SEC-02) — MUST be before session_start()
+    require_once SNOW_FUNCTIONS . '/session-handler.php';
+    $_snowSessionDb = getDbConnection();
+    $_snowSessionHandler = new SnowSessionHandler($_snowSessionDb);
+    session_set_save_handler($_snowSessionHandler, true);
+
     // Start session
     if (session_status() === PHP_SESSION_NONE) {
         ini_set('session.cookie_httponly', 1);
@@ -77,19 +87,17 @@ function initializeFramework() {
         ini_set('session.use_only_cookies', 1);
         session_start();
     }
-    
+
     // Set default timezone
     date_default_timezone_set('UTC');
-    
-// Load core functions in correct order
-require_once SNOW_FUNCTIONS . '/logging.php';
-require_once SNOW_FUNCTIONS . '/database.php';
-require_once SNOW_FUNCTIONS . '/auth.php';
-require_once SNOW_FUNCTIONS . '/template.php';
-require_once SNOW_FUNCTIONS . '/encryption.php';
-require_once SNOW_FUNCTIONS . '/pages.php';
-require_once SNOW_FUNCTIONS . '/reports.php';
-require_once SNOW_FUNCTIONS . '/email.php';
+
+    // Load remaining core functions
+    require_once SNOW_FUNCTIONS . '/auth.php';
+    require_once SNOW_FUNCTIONS . '/template.php';
+    require_once SNOW_FUNCTIONS . '/encryption.php';
+    require_once SNOW_FUNCTIONS . '/pages.php';
+    require_once SNOW_FUNCTIONS . '/reports.php';
+    require_once SNOW_FUNCTIONS . '/email.php';
 }
 
 // Route request

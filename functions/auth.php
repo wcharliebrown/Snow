@@ -3,6 +3,11 @@
  * Authentication and Authorization Functions for Snow Framework
  */
 
+// Load password policy functions if not already loaded (SEC-03)
+if (!function_exists('getPasswordPolicy')) {
+    require_once __DIR__ . '/password-policy.php';
+}
+
 /**
  * Get current user ID from session
  */
@@ -101,10 +106,28 @@ function loginUser($email, $password) {
     // Update last login
     dbUpdate('users', ['last_login' => date('Y-m-d H:i:s')], 'id = ?', [$user['id']]);
     
+    // Prevent session fixation — regenerate ID before writing session vars
+    session_regenerate_id(true);  // true = delete old session row
+
     // Set session
     $_SESSION['user_id'] = $user['id'];
     $_SESSION['login_time'] = time();
-    
+
+    // Update session row with authenticated user_id (for admin sessions viewer)
+    $sessionId = session_id();
+    if ($sessionId) {
+        dbQuery(
+            "UPDATE sessions SET user_id = ? WHERE session_id = ?",
+            [$user['id'], $sessionId]
+        );
+    }
+
+    // Check password expiry policy (SEC-03)
+    if (isPasswordExpired((int)$user['id'])) {
+        $_SESSION['require_password_change'] = true;
+        // Still return user — caller (login page script) redirects to change-password page
+    }
+
     logInfo("User logged in: {$user['id']} ({$user['email']})");
     return $user;
 }
@@ -157,17 +180,39 @@ function registerUser($email, $password, $firstName, $lastName, $groups = []) {
 
 /**
  * Change user password
+ *
+ * Returns:
+ *   false         — old password wrong or user not found
+ *   array         — non-empty array of validation error strings (strength or reuse failure)
+ *   true          — success
  */
 function changePassword($userId, $oldPassword, $newPassword) {
-    $sql = "SELECT password_hash FROM users WHERE id = ? AND status = 'active'";
+    $sql = "SELECT * FROM users WHERE id = ? AND status = 'active'";
     $user = dbGetRow($sql, [$userId]);
-    
+
     if (!$user || !password_verify($oldPassword, $user['password_hash'])) {
         return false;
     }
-    
+
+    // Validate strength against policy (SEC-03)
+    $errors = validatePasswordStrength($newPassword);
+    if (!empty($errors)) {
+        return $errors;  // Return error array (not false) so caller can display messages
+    }
+
+    // Check reuse (SEC-03)
+    if (isPasswordReused((int)$userId, $newPassword)) {
+        return ['Password was recently used. Choose a different password.'];
+    }
+
     $newHash = password_hash($newPassword, PASSWORD_DEFAULT);
-    return dbUpdate('users', ['password_hash' => $newHash], 'id = ?', [$userId]);
+    $success = dbUpdate('users', ['password_hash' => $newHash], 'id = ?', [$userId]);
+
+    if ($success) {
+        recordPasswordChange((int)$userId, $newHash);  // Record in history (SEC-03)
+    }
+
+    return $success;
 }
 
 /**
@@ -224,9 +269,10 @@ function completePasswordReset($token, $newPassword) {
     ], 'id = ?', [$user['id']]);
     
     if ($success) {
+        recordPasswordChange((int)$user['id'], $newHash);  // Record in history (SEC-03)
         logInfo("Password reset completed for user: {$user['id']}");
     }
-    
+
     return $success;
 }
 
