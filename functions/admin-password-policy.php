@@ -44,6 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // GET (or after POST): load current policy
 $policy = getPasswordPolicy();
 
+ob_start();
 ?>
 <div class="container-fluid">
     <div class="row justify-content-center">
@@ -108,3 +109,4 @@ $policy = getPasswordPolicy();
         </div>
     </div>
 </div>
+<?php $page['content'] = ob_get_clean(); ?>

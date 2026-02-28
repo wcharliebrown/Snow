@@ -44,6 +44,7 @@ requirePermission('admin_access');
 $sessions = getActiveSessions();
 $currentUserId = getCurrentUserId();
 
+ob_start();
 ?>
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -117,3 +118,4 @@ $currentUserId = getCurrentUserId();
     </div>
     <?php endif; ?>
 </div>
+<?php $page['content'] = ob_get_clean(); ?>
