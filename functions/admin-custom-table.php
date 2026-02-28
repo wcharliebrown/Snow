@@ -135,6 +135,7 @@ if ($action === 'add') {
     <?php if ($error): ?><div class="alert alert-danger"><?= $error ?></div><?php endif; ?>
     <a href="/<?= htmlspecialchars($page['path']) ?>" class="btn btn-secondary btn-sm mb-3">&larr; Back to <?= htmlspecialchars($displayName) ?></a>
     <form method="post" action="/<?= htmlspecialchars($page['path']) ?>?action=add">
+        <?= csrfField() ?>
         <input type="hidden" name="action" value="add">
         <div class="row g-3">
             <?php foreach ($fields as $f): ?>
@@ -175,6 +176,7 @@ if ($action === 'add') {
         <?php if ($error): ?><div class="alert alert-danger"><?= $error ?></div><?php endif; ?>
         <a href="/<?= htmlspecialchars($page['path']) ?>" class="btn btn-secondary btn-sm mb-3">&larr; Back to <?= htmlspecialchars($displayName) ?></a>
         <form method="post" action="/<?= htmlspecialchars($page['path']) ?>?action=edit&id=<?= $recordId ?>">
+            <?= csrfField() ?>
             <input type="hidden" name="action" value="edit">
             <div class="row g-3">
                 <?php foreach ($fields as $f): ?>
@@ -194,6 +196,7 @@ if ($action === 'add') {
         </form>
         <form method="post" action="/<?= htmlspecialchars($page['path']) ?>?action=edit&id=<?= $recordId ?>"
               class="mt-2" onsubmit="return confirm('Delete this record?')">
+            <?= csrfField() ?>
             <input type="hidden" name="action" value="delete">
             <button type="submit" class="btn btn-danger btn-sm">Delete Record</button>
         </form>

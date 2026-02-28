@@ -96,6 +96,7 @@ if (($_GET['action'] ?? '') === 'add'): ?>
     <?php if ($error): ?><div class="alert alert-danger"><?= htmlspecialchars($error) ?></div><?php endif; ?>
     <a href="/admin/plugins" class="btn btn-secondary btn-sm mb-3">&larr; Back to Plugins</a>
     <form method="post" action="/admin/plugins">
+        <?= csrfField() ?>
         <input type="hidden" name="action" value="add">
         <div class="row g-3">
             <div class="col-md-6">

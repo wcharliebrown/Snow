@@ -314,6 +314,7 @@ if ($action === 'add') {
     <?php if ($error): ?><div class="alert alert-danger"><?= htmlspecialchars($error) ?></div><?php endif; ?>
     <a href="/admin/tables" class="btn btn-secondary btn-sm mb-3">&larr; Back to Custom Tables</a>
     <form method="post" action="/admin/tables?action=add">
+        <?= csrfField() ?>
         <input type="hidden" name="action" value="add">
         <div class="row g-3">
             <div class="col-md-6">
@@ -360,6 +361,7 @@ if ($action === 'add') {
         <?php if ($error): ?><div class="alert alert-danger"><?= htmlspecialchars($error) ?></div><?php endif; ?>
         <a href="/admin/tables" class="btn btn-secondary btn-sm mb-3">&larr; Back to Custom Tables</a>
         <form method="post" action="/admin/tables?action=edit&id=<?= $tableId ?>">
+            <?= csrfField() ?>
             <input type="hidden" name="action" value="edit">
             <div class="row g-3">
                 <div class="col-md-6">
@@ -431,6 +433,7 @@ if ($action === 'add') {
                     <td>
                         <form method="post" action="/admin/tables?action=fields&id=<?= $tableId ?>" class="d-inline"
                               onsubmit="return confirm('Remove field &quot;<?= htmlspecialchars(addslashes($f['field_name'])) ?>&quot;?')">
+                            <?= csrfField() ?>
                             <input type="hidden" name="action"   value="delete_field">
                             <input type="hidden" name="field_id" value="<?= (int)$f['id'] ?>">
                             <button type="submit" class="btn btn-danger btn-sm">Remove</button>
@@ -449,6 +452,7 @@ if ($action === 'add') {
             <div class="card-header py-2"><strong>Add Field</strong></div>
             <div class="card-body">
                 <form method="post" action="/admin/tables?action=fields&id=<?= $tableId ?>">
+                    <?= csrfField() ?>
                     <input type="hidden" name="action" value="add_field">
                     <div class="row g-2">
                         <div class="col-md-3">

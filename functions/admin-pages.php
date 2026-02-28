@@ -154,6 +154,7 @@ if ($action === 'add') {
     <?php if ($error): ?><div class="alert alert-danger"><?= htmlspecialchars($error) ?></div><?php endif; ?>
     <a href="/admin/pages" class="btn btn-secondary btn-sm mb-3">&larr; Back to Pages</a>
     <form method="post" action="/admin/pages?action=add">
+        <?= csrfField() ?>
         <input type="hidden" name="action" value="add">
         <div class="row g-3">
             <div class="col-md-6">
@@ -241,6 +242,7 @@ if ($action === 'add') {
         <?php if ($isCorePage): ?><div class="alert alert-warning">This is a core page. The path cannot be changed.</div><?php endif; ?>
         <a href="/admin/pages" class="btn btn-secondary btn-sm mb-3">&larr; Back to Pages</a>
         <form method="post" action="/admin/pages?action=edit&id=<?= $pageId ?>">
+            <?= csrfField() ?>
             <input type="hidden" name="action" value="edit">
             <div class="row g-3">
                 <div class="col-md-6">

@@ -86,6 +86,7 @@ ob_start();
     <div class="card-header py-2"><strong>Record Snapshot</strong></div>
     <div class="card-body">
         <form method="post" action="/admin/snapshots" class="row g-2 align-items-end">
+            <?= csrfField() ?>
             <input type="hidden" name="action" value="create">
             <div class="col-md-3">
                 <label class="form-label form-label-sm">Table</label>

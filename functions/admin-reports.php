@@ -159,6 +159,7 @@ if ($action === 'add') {
     <?php if ($error): ?><div class="alert alert-danger"><?= htmlspecialchars($error) ?></div><?php endif; ?>
     <a href="/admin/reports" class="btn btn-secondary btn-sm mb-3">&larr; Back to Reports</a>
     <form method="post" action="/admin/reports?action=add">
+        <?= csrfField() ?>
         <input type="hidden" name="action" value="add">
         <div class="row g-3">
             <div class="col-md-6">
@@ -244,6 +245,7 @@ if ($action === 'add') {
         <?php if ($error): ?><div class="alert alert-danger"><?= htmlspecialchars($error) ?></div><?php endif; ?>
         <a href="/admin/reports" class="btn btn-secondary btn-sm mb-3">&larr; Back to Reports</a>
         <form method="post" action="/admin/reports?action=edit&id=<?= $reportId ?>">
+            <?= csrfField() ?>
             <input type="hidden" name="action" value="edit">
             <div class="row g-3">
                 <div class="col-md-6">
@@ -327,6 +329,7 @@ if ($action === 'add') {
             <div>
                 <a href="/admin/reports?action=edit&id=<?= $reportId ?>" class="btn btn-primary btn-sm">Edit</a>
                 <form method="post" action="/admin/reports?action=duplicate&id=<?= $reportId ?>" class="d-inline">
+                    <?= csrfField() ?>
                     <input type="hidden" name="action" value="duplicate">
                     <button type="submit" class="btn btn-secondary btn-sm">Duplicate</button>
                 </form>

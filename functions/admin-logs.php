@@ -117,6 +117,7 @@ ob_start();
     <?php foreach (['error','info','traffic','email'] as $lvl): ?>
     <form method="post" action="/admin/logs" class="d-inline"
           onsubmit="return confirm('Clear <?= $lvl ?> log?')">
+        <?= csrfField() ?>
         <input type="hidden" name="action" value="clear">
         <input type="hidden" name="level"  value="<?= $lvl ?>">
         <button type="submit" class="btn btn-outline-secondary btn-sm">Clear <?= ucfirst($lvl) ?></button>
@@ -124,6 +125,7 @@ ob_start();
     <?php endforeach; ?>
     <form method="post" action="/admin/logs" class="d-inline"
           onsubmit="return confirm('Clear ALL logs?')">
+        <?= csrfField() ?>
         <input type="hidden" name="action" value="clear">
         <button type="submit" class="btn btn-outline-danger btn-sm">Clear All</button>
     </form>

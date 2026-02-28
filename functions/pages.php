@@ -37,6 +37,10 @@ function renderPage($path) {
         return;
     }
     
+    // CSRF enforcement — must run before page scripts process POST data (SEC-01)
+    require_once SNOW_FUNCTIONS . '/csrf.php';
+    requireCsrf();
+
     // Execute custom page script if exists
     if ($page['custom_script']) {
         $scriptFile = SNOW_FUNCTIONS . '/' . $page['custom_script'];

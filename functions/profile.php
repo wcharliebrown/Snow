@@ -95,6 +95,7 @@ ob_start();
             </div>
             <div class="card-body">
                 <form method="post">
+                    <?= csrfField() ?>
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label for="first_name" class="form-label">First Name</label>

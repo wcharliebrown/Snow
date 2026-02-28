@@ -134,6 +134,7 @@ if ($action === 'add') {
     <?php if ($error): ?><div class="alert alert-danger"><?= htmlspecialchars($error) ?></div><?php endif; ?>
     <a href="/admin/users" class="btn btn-secondary btn-sm mb-3">&larr; Back to Users</a>
     <form method="post" action="/admin/users?action=add">
+        <?= csrfField() ?>
         <input type="hidden" name="action" value="add">
         <div class="row g-3">
             <div class="col-md-6">
@@ -183,6 +184,7 @@ if ($action === 'add') {
         <?php if ($error): ?><div class="alert alert-danger"><?= htmlspecialchars($error) ?></div><?php endif; ?>
         <a href="/admin/users" class="btn btn-secondary btn-sm mb-3">&larr; Back to Users</a>
         <form method="post" action="/admin/users?action=edit&id=<?= $userId ?>">
+            <?= csrfField() ?>
             <input type="hidden" name="action" value="edit">
             <div class="row g-3">
                 <div class="col-md-6">

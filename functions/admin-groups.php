@@ -140,6 +140,7 @@ if ($action === 'add') {
     <?php if ($error): ?><div class="alert alert-danger"><?= htmlspecialchars($error) ?></div><?php endif; ?>
     <a href="/admin/groups" class="btn btn-secondary btn-sm mb-3">&larr; Back to Groups</a>
     <form method="post" action="/admin/groups?action=add">
+        <?= csrfField() ?>
         <input type="hidden" name="action" value="add">
         <div class="row g-3">
             <div class="col-md-6">
@@ -206,6 +207,7 @@ if ($action === 'add') {
         <?php if ($isCoreGroup): ?><div class="alert alert-warning">This is a core group and cannot be deactivated.</div><?php endif; ?>
         <a href="/admin/groups" class="btn btn-secondary btn-sm mb-3">&larr; Back to Groups</a>
         <form method="post" action="/admin/groups?action=edit&id=<?= $groupId ?>">
+            <?= csrfField() ?>
             <input type="hidden" name="action" value="edit">
             <div class="row g-3">
                 <div class="col-md-6">
