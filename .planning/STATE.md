@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-last_updated: "2026-02-28T18:19:00.000Z"
+status: complete
+last_updated: "2026-02-28T18:41:42.890Z"
 progress:
   total_phases: 1
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 6
-  completed_plans: 5
+  completed_plans: 6
 ---
 
 # Project State
@@ -22,28 +22,28 @@ See: .planning/PROJECT.md (updated 2026-02-27)
 
 ## Current Position
 
-Phase: 1 of 5 (Security Foundations)
-Plan: 5 of 6 in current phase
-Status: Executing
-Last activity: 2026-02-28 — Plan 01-05 complete: DB-backed structured logging via activity_log table with flat-file fallback; admin log viewer updated with user/IP context and event_type filter
+Phase: 1 of 5 (Security Foundations) — COMPLETE
+Plan: 6 of 6 in current phase — ALL PLANS COMPLETE
+Status: Complete
+Last activity: 2026-02-28 — Plan 01-06 complete: admin sessions viewer with force-logout and admin password policy config UI; both pages registered in DB at admin/sessions and admin/password-policy
 
-Progress: [█████░░░░░] 83%
+Progress: [██████████] 100% (Phase 01 complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 5
-- Average duration: 10.6 min
-- Total execution time: 0.88 hours
+- Total plans completed: 6
+- Average duration: 11.3 min
+- Total execution time: 1.13 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 01-security-foundations | 5 | 53 min | 10.6 min |
+| 01-security-foundations | 6 | 68 min | 11.3 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (20 min), 01-02 (5 min), 01-03 (3 min), 01-04 (10 min), 01-05 (15 min)
+- Last 6 plans: 01-01 (20 min), 01-02 (5 min), 01-03 (3 min), 01-04 (10 min), 01-05 (15 min), 01-06 (15 min)
 - Trend: Stable
 
 *Updated after each plan completion*
@@ -74,6 +74,8 @@ Recent decisions affecting current work:
 - [Phase 01-05]: Flat-file write runs unconditionally alongside DB write — provides audit redundancy even when DB is healthy
 - [Phase 01-05]: logMessage() catch block uses @file_put_contents directly, never calls logError() — eliminates recursion risk when DB is down (PITFALL-4)
 - [Phase 01-05]: EMAIL badge colour set to success (green) rather than warning (yellow) to distinguish from TRAFFIC (grey)
+- [Phase 01-06]: Force-logout by numeric row id: query sessions.session_id WHERE id=?, call forceLogoutSession(string) — avoids exposing raw session tokens in HTML
+- [Phase 01-06]: admin/sessions uses admin_access permission (super-admin only); admin/password-policy uses user_management
 
 ### Pending Todos
 
@@ -88,5 +90,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-28
-Stopped at: Completed 01-05-PLAN.md — DB-backed structured logging (activity_log) with flat-file fallback; admin log viewer with user/IP context; ready for Plan 01-06
+Stopped at: Completed 01-06-PLAN.md — Phase 01 Security Foundations complete. Admin sessions viewer + password policy config UI registered in DB. Ready for Phase 02.
 Resume file: None
