@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-01T19:44:53.010Z"
+last_updated: "2026-03-01T20:24:36.710Z"
 progress:
   total_phases: 2
   completed_phases: 2
-  total_plans: 11
-  completed_plans: 11
+  total_plans: 12
+  completed_plans: 12
 ---
 
 # Project State
@@ -89,6 +89,8 @@ Recent decisions affecting current work:
 - [Phase 02-03]: Delete form hidden entirely for view-only users (not just disabled) — consistent with cannot-edit semantics
 - [Phase 02-access-control]: Add form uses (array)($_POST['view_groups'] ?? []) — PHP delivers name=view_groups[] as an array, not a _raw string key
 - [Phase 02-access-control]: Edit form repopulation uses REQUEST_METHOD guard: GET parses DB comma-string with explode(), POST reads submitted array directly
+- [Phase 02-access-control]: table_data_access is a separate permission from table_management — data users reach admin/data/* but cannot touch schema or ACL group assignments
+- [Phase 02-access-control]: Sentinel null ($viewGroupIds = null) used to distinguish do-not-write from empty-array (open-to-all) in POST handlers
 
 ### Pending Todos
 

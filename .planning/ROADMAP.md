@@ -100,7 +100,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Security Foundations | 4/6 | In Progress|  |
-| 2. Access Control | 5/6 | In Progress (gap closure) | - |
+| 2. Access Control | 6/6 | Complete   | 2026-03-01 |
 | 3. Data Integrity | 0/TBD | Not started | - |
 | 4. Extensibility | 0/TBD | Not started | - |
 | 5. User Experience | 0/TBD | Not started | - |
