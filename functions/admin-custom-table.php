@@ -162,6 +162,13 @@ if ($action === 'add') {
         ['title' => $displayName, 'url' => '/' . $page['path']],
         ['title' => 'Add',        'url' => '', 'current' => true],
     ];
+    // Load all active groups for the ACL selector widget
+    $allGroups = dbGetRows("SELECT id, name FROM user_groups_list WHERE status = 'active' ORDER BY name", []);
+    $currentRecord = [];
+    $currentViewGroups = array_filter(array_map('intval',
+        explode(',', $_POST['view_groups_raw'] ?? '')));
+    $currentEditGroups = array_filter(array_map('intval',
+        explode(',', $_POST['edit_groups_raw'] ?? '')));
     ?>
     <?php if ($error): ?><div class="alert alert-danger"><?= $error ?></div><?php endif; ?>
     <a href="/<?= htmlspecialchars($page['path']) ?>" class="btn btn-secondary btn-sm mb-3">&larr; Back to <?= htmlspecialchars($displayName) ?></a>
@@ -183,6 +190,58 @@ if ($action === 'add') {
                 <p class="text-muted">No fields defined yet. <a href="/admin/tables?action=fields&id=<?= (int)$tableDef['id'] ?>">Add fields</a> to this table first.</p>
             </div>
             <?php endif; ?>
+            <!-- Status field -->
+            <div class="col-md-4">
+                <label class="form-label">Status</label>
+                <select name="status" class="form-select">
+                    <option value="active"   <?= (($_POST['status'] ?? 'active') === 'active')   ? 'selected' : '' ?>>Active</option>
+                    <option value="inactive" <?= (($_POST['status'] ?? '') === 'inactive') ? 'selected' : '' ?>>Inactive</option>
+                </select>
+            </div>
+            <!-- View Groups -->
+            <div class="col-12">
+                <label class="form-label fw-semibold">View Groups <small class="text-muted fw-normal">(leave unchecked for all users)</small></label>
+                <?php if ($allGroups): ?>
+                <div class="row g-2">
+                    <?php foreach ($allGroups as $g): ?>
+                    <div class="col-md-4">
+                        <div class="form-check">
+                            <input type="checkbox" name="view_groups[]" class="form-check-input"
+                                id="vg_<?= (int)$g['id'] ?>" value="<?= (int)$g['id'] ?>"
+                                <?= in_array((int)$g['id'], $currentViewGroups) ? 'checked' : '' ?>>
+                            <label class="form-check-label" for="vg_<?= (int)$g['id'] ?>">
+                                <?= htmlspecialchars($g['name']) ?>
+                            </label>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+                <?php else: ?>
+                <p class="text-muted small">No groups defined. <a href="/admin/groups">Add groups</a> first.</p>
+                <?php endif; ?>
+            </div>
+            <!-- Edit Groups -->
+            <div class="col-12">
+                <label class="form-label fw-semibold">Edit Groups <small class="text-muted fw-normal">(leave unchecked for all users who can view)</small></label>
+                <?php if ($allGroups): ?>
+                <div class="row g-2">
+                    <?php foreach ($allGroups as $g): ?>
+                    <div class="col-md-4">
+                        <div class="form-check">
+                            <input type="checkbox" name="edit_groups[]" class="form-check-input"
+                                id="eg_<?= (int)$g['id'] ?>" value="<?= (int)$g['id'] ?>"
+                                <?= in_array((int)$g['id'], $currentEditGroups) ? 'checked' : '' ?>>
+                            <label class="form-check-label" for="eg_<?= (int)$g['id'] ?>">
+                                <?= htmlspecialchars($g['name']) ?>
+                            </label>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+                <?php else: ?>
+                <p class="text-muted small">No groups defined.</p>
+                <?php endif; ?>
+            </div>
         </div>
         <div class="mt-3">
             <button type="submit" class="btn btn-success">Create</button>
@@ -195,7 +254,12 @@ if ($action === 'add') {
     $record = dbGetRow("SELECT * FROM `{$tableName}` WHERE id = ?", [$recordId]);
     if (!$record) {
         echo '<div class="alert alert-danger">Record not found.</div>';
+    } elseif (!canViewRow($record)) {
+        // Row-level view check
+        http_response_code(403);
+        echo '<div class="alert alert-danger">You do not have permission to view this record.</div>';
     } else {
+        $canEdit = canEditRow($record);
         $page['title'] = 'Edit ' . $displayName;
         $page['breadcrumbs'] = [
             ['title' => 'Home',             'url' => '/'],
@@ -203,12 +267,20 @@ if ($action === 'add') {
             ['title' => $displayName,       'url' => '/' . $page['path']],
             ['title' => 'Edit #' . $recordId, 'url' => '', 'current' => true],
         ];
+        // Load all active groups for the ACL selector widget
+        $allGroups = dbGetRows("SELECT id, name FROM user_groups_list WHERE status = 'active' ORDER BY name", []);
+        $currentRecord = $record;
+        $currentViewGroups = array_filter(array_map('intval',
+            explode(',', $_POST['view_groups_raw'] ?? $currentRecord['view_groups'] ?? '')));
+        $currentEditGroups = array_filter(array_map('intval',
+            explode(',', $_POST['edit_groups_raw'] ?? $currentRecord['edit_groups'] ?? '')));
         ?>
         <?php if ($error): ?><div class="alert alert-danger"><?= $error ?></div><?php endif; ?>
         <a href="/<?= htmlspecialchars($page['path']) ?>" class="btn btn-secondary btn-sm mb-3">&larr; Back to <?= htmlspecialchars($displayName) ?></a>
         <form method="post" action="/<?= htmlspecialchars($page['path']) ?>?action=edit&id=<?= $recordId ?>">
             <?= csrfField() ?>
             <input type="hidden" name="action" value="edit">
+            <?php if (!$canEdit): ?><fieldset disabled><?php endif; ?>
             <div class="row g-3">
                 <?php foreach ($fields as $f): ?>
                 <div class="col-md-6">
@@ -219,18 +291,77 @@ if ($action === 'add') {
                     <?= renderCustomFieldInput($f, $_POST[$f['field_name']] ?? $record[$f['field_name']] ?? '') ?>
                 </div>
                 <?php endforeach; ?>
+                <!-- Status field -->
+                <div class="col-md-4">
+                    <label class="form-label">Status</label>
+                    <select name="status" class="form-select">
+                        <option value="active"   <?= (($_POST['status'] ?? $currentRecord['status'] ?? 'active') === 'active')   ? 'selected' : '' ?>>Active</option>
+                        <option value="inactive" <?= (($_POST['status'] ?? $currentRecord['status'] ?? '') === 'inactive') ? 'selected' : '' ?>>Inactive</option>
+                    </select>
+                </div>
+                <!-- View Groups -->
+                <div class="col-12">
+                    <label class="form-label fw-semibold">View Groups <small class="text-muted fw-normal">(leave unchecked for all users)</small></label>
+                    <?php if ($allGroups): ?>
+                    <div class="row g-2">
+                        <?php foreach ($allGroups as $g): ?>
+                        <div class="col-md-4">
+                            <div class="form-check">
+                                <input type="checkbox" name="view_groups[]" class="form-check-input"
+                                    id="vg_<?= (int)$g['id'] ?>" value="<?= (int)$g['id'] ?>"
+                                    <?= in_array((int)$g['id'], $currentViewGroups) ? 'checked' : '' ?>>
+                                <label class="form-check-label" for="vg_<?= (int)$g['id'] ?>">
+                                    <?= htmlspecialchars($g['name']) ?>
+                                </label>
+                            </div>
+                        </div>
+                        <?php endforeach; ?>
+                    </div>
+                    <?php else: ?>
+                    <p class="text-muted small">No groups defined. <a href="/admin/groups">Add groups</a> first.</p>
+                    <?php endif; ?>
+                </div>
+                <!-- Edit Groups -->
+                <div class="col-12">
+                    <label class="form-label fw-semibold">Edit Groups <small class="text-muted fw-normal">(leave unchecked for all users who can view)</small></label>
+                    <?php if ($allGroups): ?>
+                    <div class="row g-2">
+                        <?php foreach ($allGroups as $g): ?>
+                        <div class="col-md-4">
+                            <div class="form-check">
+                                <input type="checkbox" name="edit_groups[]" class="form-check-input"
+                                    id="eg_<?= (int)$g['id'] ?>" value="<?= (int)$g['id'] ?>"
+                                    <?= in_array((int)$g['id'], $currentEditGroups) ? 'checked' : '' ?>>
+                                <label class="form-check-label" for="eg_<?= (int)$g['id'] ?>">
+                                    <?= htmlspecialchars($g['name']) ?>
+                                </label>
+                            </div>
+                        </div>
+                        <?php endforeach; ?>
+                    </div>
+                    <?php else: ?>
+                    <p class="text-muted small">No groups defined.</p>
+                    <?php endif; ?>
+                </div>
             </div>
+            <?php if (!$canEdit): ?>
+            </fieldset>
+            <div class="alert alert-warning mt-3">You have view-only access to this record.</div>
+            <?php else: ?>
             <div class="mt-3">
                 <button type="submit" class="btn btn-primary">Save Changes</button>
                 <a href="/<?= htmlspecialchars($page['path']) ?>" class="btn btn-secondary ms-2">Cancel</a>
             </div>
+            <?php endif; ?>
         </form>
+        <?php if ($canEdit): ?>
         <form method="post" action="/<?= htmlspecialchars($page['path']) ?>?action=edit&id=<?= $recordId ?>"
               class="mt-2" onsubmit="return confirm('Delete this record?')">
             <?= csrfField() ?>
             <input type="hidden" name="action" value="delete">
             <button type="submit" class="btn btn-danger btn-sm">Delete Record</button>
         </form>
+        <?php endif; ?>
         <?php
     }
 
@@ -242,18 +373,50 @@ if ($action === 'add') {
         ['title' => 'Admin',      'url' => '/admin'],
         ['title' => $displayName, 'url' => '', 'current' => true],
     ];
-    $totalCount = dbGetRow("SELECT COUNT(*) AS n FROM `{$tableName}`")['n'] ?? 0;
-    $listReport = getReportByName($tableName . '_list');
+
+    // Fetch all rows and apply ACL filter
+    $allRows      = dbGetRows("SELECT * FROM `{$tableName}` ORDER BY id DESC", []);
+    $rows         = filterRowsByViewAccess($allRows);
+    $visibleCount = count($rows);
     ?>
     <?php if ($message): ?><div class="alert alert-success"><?= htmlspecialchars($message) ?></div><?php endif; ?>
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <span><?= (int)$totalCount ?> record<?= $totalCount !== 1 ? 's' : '' ?></span>
+        <span><?= (int)$visibleCount ?> record<?= $visibleCount !== 1 ? 's' : '' ?></span>
         <a href="/<?= htmlspecialchars($page['path']) ?>?action=add" class="btn btn-success btn-sm">+ Add <?= htmlspecialchars($displayName) ?></a>
     </div>
-    <?php if ($listReport): ?>
-        <?= renderReport($listReport) ?>
+    <?php if ($rows): ?>
+    <div class="table-responsive">
+    <table class="table table-striped table-hover">
+        <thead class="table-dark">
+            <tr>
+                <th>ID</th>
+                <?php foreach ($fields as $f): ?>
+                    <?php if ($f['is_visible']): ?><th><?= htmlspecialchars($f['display_label']) ?></th><?php endif; ?>
+                <?php endforeach; ?>
+                <th>View Groups</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        <?php foreach ($rows as $row): ?>
+            <tr>
+                <td><?= (int)$row['id'] ?></td>
+                <?php foreach ($fields as $f): ?>
+                    <?php if ($f['is_visible']): ?>
+                    <td><?= htmlspecialchars((string)($row[$f['field_name']] ?? '')) ?></td>
+                    <?php endif; ?>
+                <?php endforeach; ?>
+                <td><?= formatGroupIds($row['view_groups'] ?? null) ?></td>
+                <td><?= htmlspecialchars($row['status'] ?? 'active') ?></td>
+                <td><a href="/<?= htmlspecialchars($page['path']) ?>?action=edit&id=<?= (int)$row['id'] ?>" class="btn btn-primary btn-sm">Edit</a></td>
+            </tr>
+        <?php endforeach; ?>
+        </tbody>
+    </table>
+    </div>
     <?php else: ?>
-        <div class="alert alert-warning">Report <code><?= htmlspecialchars($tableName . '_list') ?></code> not found.</div>
+    <div class="alert alert-info">No records found<?= $allRows ? ' that you have permission to view' : '' ?>.</div>
     <?php endif; ?>
     <?php
 }
