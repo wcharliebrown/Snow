@@ -190,6 +190,14 @@ if ($action === 'add') {
             ['title' => 'Users',   'url' => '/admin/users'],
             ['title' => 'Edit',    'url' => '', 'current' => true],
         ];
+        // Load group membership data for the widget
+        $allGroups       = dbGetRows("SELECT id, name FROM user_groups_list WHERE status = 'active' ORDER BY name", []);
+        $userGroups      = getUserGroups($userId);
+        $currentGroupIds = array_map('intval', array_column($userGroups, 'id'));
+        // On POST validation failure, use submitted values instead
+        $selectedGroupIds = isset($_POST['groups'])
+            ? array_map('intval', (array)$_POST['groups'])
+            : $currentGroupIds;
         ?>
         <?php if ($error): ?><div class="alert alert-danger"><?= htmlspecialchars($error) ?></div><?php endif; ?>
         <a href="/admin/users" class="btn btn-secondary btn-sm mb-3">&larr; Back to Users</a>
@@ -222,6 +230,31 @@ if ($action === 'add') {
                     <input type="password" name="password" class="form-control" minlength="<?= (int)getPasswordPolicy()['min_length'] ?>">
                 </div>
             </div>
+
+            <?php if ($allGroups): ?>
+            <div class="mt-4">
+                <h6 class="mb-2">Group Membership</h6>
+                <div class="row g-2">
+                    <?php foreach ($allGroups as $g): ?>
+                    <div class="col-md-4">
+                        <div class="form-check">
+                            <input type="checkbox" name="groups[]" class="form-check-input"
+                                id="grp_<?= (int)$g['id'] ?>" value="<?= (int)$g['id'] ?>"
+                                <?= in_array((int)$g['id'], $selectedGroupIds) ? 'checked' : '' ?>>
+                            <label class="form-check-label" for="grp_<?= (int)$g['id'] ?>">
+                                <?= htmlspecialchars($g['name']) ?>
+                            </label>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+            <?php else: ?>
+            <div class="mt-4">
+                <p class="text-muted small">No groups defined. <a href="/admin/groups">Create groups</a> to assign group membership.</p>
+            </div>
+            <?php endif; ?>
+
             <div class="mt-3">
                 <button type="submit" class="btn btn-primary">Save Changes</button>
                 <a href="/admin/users" class="btn btn-secondary ms-2">Cancel</a>
