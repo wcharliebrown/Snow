@@ -1,5 +1,5 @@
 ---
-status: complete
+status: diagnosed
 phase: 02-access-control
 source: 02-01-SUMMARY.md, 02-02-SUMMARY.md, 02-03-SUMMARY.md, 02-04-SUMMARY.md
 started: 2026-03-01T17:45:00Z
@@ -73,9 +73,13 @@ skipped: 4
   reason: "User reported: The Status field shows but the 'View Groups' and 'Edit Groups' are missing"
   severity: major
   test: 3
-  root_cause: ""
-  artifacts: []
-  missing: []
+  root_cause: "HTML for View Groups/Edit Groups sections is completely absent from page source. Status field (line 301) renders, but pure-HTML View Groups comment/div (lines 302-304) does not appear. Groups confirmed active in user_groups_list. Root cause unknown from static analysis — requires PHP error log inspection or runtime debug output near line 302 to identify what stops execution."
+  artifacts:
+    - path: "functions/admin-custom-table.php"
+      issue: "View Groups and Edit Groups sections (lines 302-345) absent from rendered HTML despite Status field rendering. Secondary confirmed bug: lines 168-171 and 273-276 use $_POST['view_groups_raw'] (non-existent field) instead of $_POST['view_groups'] for checkbox repopulation on failed submit."
+  missing:
+    - "Identify why HTML output stops after Status div on edit form"
+    - "Fix view_groups_raw/edit_groups_raw repopulation bug"
   debug_session: ""
 
 - truth: "Add/edit forms for existing (pre-Phase-2) custom table rows include View Groups and Edit Groups checkbox sections after auto-migration"
@@ -83,9 +87,12 @@ skipped: 4
   reason: "User reported: same, View Groups and Edit Groups are missing"
   severity: major
   test: 5
-  root_cause: ""
-  artifacts: []
-  missing: []
+  root_cause: "Same root cause as test 3"
+  artifacts:
+    - path: "functions/admin-custom-table.php"
+      issue: "Same as test 3"
+  missing:
+    - "Same as test 3"
   debug_session: ""
 
 - truth: "Add/edit forms for new custom table rows include View Groups and Edit Groups checkbox sections"
@@ -93,7 +100,10 @@ skipped: 4
   reason: "User reported: View Groups, and Edit Groups fields are missing"
   severity: major
   test: 4
-  root_cause: ""
-  artifacts: []
-  missing: []
+  root_cause: "Same root cause as test 3"
+  artifacts:
+    - path: "functions/admin-custom-table.php"
+      issue: "Same as test 3"
+  missing:
+    - "Same as test 3"
   debug_session: ""
