@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-01T20:24:36.710Z"
+last_updated: "2026-03-01T20:54:28.705Z"
 progress:
   total_phases: 2
   completed_phases: 2
@@ -22,12 +22,12 @@ See: .planning/PROJECT.md (updated 2026-02-27)
 
 ## Current Position
 
-Phase: 2 of 5 (Access Control) — IN PROGRESS
-Plan: 5 of TBD in current phase (02-05 complete)
-Status: In Progress
-Last activity: 2026-03-01 — Plan 02-05 complete: Fixed view_groups_raw/edit_groups_raw phantom key bug; View Groups and Edit Groups checkbox sections now render and repopulate correctly on add/edit forms; user-verified working
+Phase: 2 of 5 (Access Control) — COMPLETE
+Plan: 6 of 6 in current phase (02-06 complete)
+Status: Complete
+Last activity: 2026-03-01 — Plan 02-06 complete: table_data_access permission introduced; non-admin users can reach admin/data/* with row-level ACL applied; human-verified passing. Phase 2 fully complete.
 
-Progress: [█████░░░░░] 45% (Phase 01 complete, Phase 02 plans 01-03 done)
+Progress: [██████████] 100% (Phase 01 complete, Phase 02 complete — all 6 plans done)
 
 ## Performance Metrics
 
@@ -49,6 +49,7 @@ Progress: [█████░░░░░] 45% (Phase 01 complete, Phase 02 plan
 
 *Updated after each plan completion*
 | Phase 02-access-control P05 | 1 | 1 tasks | 1 files |
+| Phase 02-access-control P06 | 45 | 3 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -91,6 +92,7 @@ Recent decisions affecting current work:
 - [Phase 02-access-control]: Edit form repopulation uses REQUEST_METHOD guard: GET parses DB comma-string with explode(), POST reads submitted array directly
 - [Phase 02-access-control]: table_data_access is a separate permission from table_management — data users reach admin/data/* but cannot touch schema or ACL group assignments
 - [Phase 02-access-control]: Sentinel null ($viewGroupIds = null) used to distinguish do-not-write from empty-array (open-to-all) in POST handlers
+- [Phase 02-access-control]: When splitting a permission, always grant the new child to groups already holding the parent — prevents admin privilege regression
 
 ### Pending Todos
 
@@ -105,5 +107,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-01
-Stopped at: Completed 02-05-PLAN.md — Fixed view_groups_raw/edit_groups_raw phantom key bug; View Groups and Edit Groups checkbox sections render correctly on add/edit forms (user-verified). ACL-02, ACL-03, DATA-01 satisfied.
+Stopped at: Completed 02-06-PLAN.md — table_data_access permission introduced; non-admin users can reach admin/data/* with row-level ACL applied; human-verified passing. Phase 2 fully complete (all 6 plans). Ready for Phase 3 planning.
 Resume file: None
