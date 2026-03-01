@@ -5,6 +5,8 @@
  * e.g. path "admin/data/my_table" → table "my_table"
  */
 
+require_once __DIR__ . '/acl.php';
+
 requirePermission('table_management');
 
 // Derive table name from URL path
@@ -55,6 +57,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $postAction = $_POST['action'] ?? $action;
 
     if ($postAction === 'add') {
+        // Serialize ACL group selections (NULL when none checked = open to all)
+        $viewGroupIds = array_filter(array_map('intval', (array)($_POST['view_groups'] ?? [])));
+        $editGroupIds  = array_filter(array_map('intval', (array)($_POST['edit_groups'] ?? [])));
+
         $rowData  = [];
         $hasError = false;
         foreach ($fields as $f) {
@@ -67,6 +73,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $rowData[$f['field_name']] = ($val !== '') ? $val : null;
         }
         if (!$hasError) {
+            $rowData['view_groups'] = !empty($viewGroupIds) ? implode(',', $viewGroupIds) : null;
+            $rowData['edit_groups']  = !empty($editGroupIds)  ? implode(',', $editGroupIds)  : null;
+            // Standard field: status
+            if (isset($_POST['status'])) {
+                $rowData['status'] = in_array($_POST['status'], ['active', 'inactive']) ? $_POST['status'] : 'active';
+            }
             dbInsert($tableName, $rowData);
             header('Location: /' . $page['path'] . '?msg=created');
             exit;
@@ -74,9 +86,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $action = 'add';
 
     } elseif ($postAction === 'edit' && $recordId) {
+        // Row-level edit permission check
+        $existingForAcl = dbGetRow("SELECT * FROM `{$tableName}` WHERE id = ?", [$recordId]);
+        if (!$existingForAcl || !canEditRow($existingForAcl)) {
+            http_response_code(403);
+            $error = 'You do not have permission to edit this record.';
+            $hasError = true;
+        }
+
+        // Serialize ACL group selections (NULL when none checked = open to all)
+        $viewGroupIds = array_filter(array_map('intval', (array)($_POST['view_groups'] ?? [])));
+        $editGroupIds  = array_filter(array_map('intval', (array)($_POST['edit_groups'] ?? [])));
+
         $rowData  = [];
-        $hasError = false;
+        if (!isset($hasError)) { $hasError = false; }
         foreach ($fields as $f) {
+            if ($hasError) break;
             $val = trim($_POST[$f['field_name']] ?? '');
             if ($f['is_required'] && $val === '') {
                 $error    = htmlspecialchars($f['display_label']) . ' is required.';
@@ -86,6 +111,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $rowData[$f['field_name']] = ($val !== '') ? $val : null;
         }
         if (!$hasError) {
+            $rowData['view_groups'] = !empty($viewGroupIds) ? implode(',', $viewGroupIds) : null;
+            $rowData['edit_groups']  = !empty($editGroupIds)  ? implode(',', $editGroupIds)  : null;
+            // Standard field: status
+            if (isset($_POST['status'])) {
+                $rowData['status'] = in_array($_POST['status'], ['active', 'inactive']) ? $_POST['status'] : 'active';
+            }
             dbUpdate($tableName, $rowData, 'id = ?', [$recordId]);
             header('Location: /' . $page['path'] . '?msg=updated');
             exit;
