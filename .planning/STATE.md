@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-01T16:51:30Z"
+last_updated: "2026-03-01T17:38:05Z"
 progress:
   total_phases: 5
   completed_phases: 1
   total_plans: 10
-  completed_plans: 8
+  completed_plans: 9
 ---
 
 # Project State
@@ -23,11 +23,11 @@ See: .planning/PROJECT.md (updated 2026-02-27)
 ## Current Position
 
 Phase: 2 of 5 (Access Control) — IN PROGRESS
-Plan: 2 of TBD in current phase (02-02 complete — backfilled)
+Plan: 3 of TBD in current phase (02-03 complete)
 Status: In Progress
-Last activity: 2026-03-01 — Plan 02-02 complete: provisionCustomTable() updated with Phase 2 6-column schema (status, view_groups, edit_groups, created_at, modified_at); migrateExistingCustomTables() added; database_schema.sql documented
+Last activity: 2026-03-01 — Plan 02-03 complete: Row-level ACL enforcement wired into admin-custom-table.php at all four points (list filter, edit GET view gate, edit GET edit gate, POST save gate); group selector widget and status field added to add/edit forms
 
-Progress: [████░░░░░░] 40% (Phase 01 complete, Phase 02 plans 01-02 done)
+Progress: [█████░░░░░] 45% (Phase 01 complete, Phase 02 plans 01-03 done)
 
 ## Performance Metrics
 
@@ -41,10 +41,10 @@ Progress: [████░░░░░░] 40% (Phase 01 complete, Phase 02 plan
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-security-foundations | 6 | 68 min | 11.3 min |
-| 02-access-control | 1 | 1 min | 1 min |
+| 02-access-control | 2 | 33 min | 16.5 min |
 
 **Recent Trend:**
-- Last 7 plans: 01-01 (20 min), 01-02 (5 min), 01-03 (3 min), 01-04 (10 min), 01-05 (15 min), 01-06 (15 min), 02-04 (1 min)
+- Last 7 plans: 01-01 (20 min), 01-02 (5 min), 01-03 (3 min), 01-04 (10 min), 01-05 (15 min), 01-06 (15 min), 02-04 (1 min), 02-03 (32 min)
 - Trend: Stable
 
 *Updated after each plan completion*
@@ -83,6 +83,9 @@ Recent decisions affecting current work:
 - [Phase 02-02]: status uses VARCHAR(20) not ENUM to allow future lifecycle states without schema migration
 - [Phase 02-04]: DELETE+INSERT approach for group membership saves — single code path handles add, remove, and no-change uniformly
 - [Phase 02-04]: POST validation failure re-check uses submitted $groups values, not DB values — preserves user input on error redisplay
+- [Phase 02-03]: admin-custom-table.php list view replaced renderReport() with direct ACL-filtered fetch using filterRowsByViewAccess(); visible count uses post-filter count
+- [Phase 02-03]: Edit view-only mode uses fieldset[disabled] wrapper — browser prevents submission and reinforces the POST-level ACL gate
+- [Phase 02-03]: Delete form hidden entirely for view-only users (not just disabled) — consistent with cannot-edit semantics
 
 ### Pending Todos
 
@@ -97,5 +100,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-01
-Stopped at: Completed 02-02-PLAN.md (backfilled) — provisionCustomTable updated with Phase 2 6-column schema; migrateExistingCustomTables() added to admin-tables.php; database_schema.sql Phase 2 section documented. DATA-01 satisfied.
+Stopped at: Completed 02-03-PLAN.md — Row-level ACL enforcement wired into admin-custom-table.php (list filter, edit GET gates, POST save gate); group selector widget and status field added to add/edit forms. ACL-02 and ACL-03 satisfied.
 Resume file: None
