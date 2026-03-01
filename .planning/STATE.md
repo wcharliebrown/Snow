@@ -23,9 +23,9 @@ See: .planning/PROJECT.md (updated 2026-02-27)
 ## Current Position
 
 Phase: 2 of 5 (Access Control) — IN PROGRESS
-Plan: 3 of TBD in current phase (02-03 complete)
+Plan: 5 of TBD in current phase (02-05 complete)
 Status: In Progress
-Last activity: 2026-03-01 — Plan 02-03 complete: Row-level ACL enforcement wired into admin-custom-table.php at all four points (list filter, edit GET view gate, edit GET edit gate, POST save gate); group selector widget and status field added to add/edit forms
+Last activity: 2026-03-01 — Plan 02-05 complete: Fixed view_groups_raw/edit_groups_raw phantom key bug; View Groups and Edit Groups checkbox sections now render and repopulate correctly on add/edit forms; user-verified working
 
 Progress: [█████░░░░░] 45% (Phase 01 complete, Phase 02 plans 01-03 done)
 
@@ -103,5 +103,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-01
-Stopped at: Completed 02-03-PLAN.md — Row-level ACL enforcement wired into admin-custom-table.php (list filter, edit GET gates, POST save gate); group selector widget and status field added to add/edit forms. ACL-02 and ACL-03 satisfied.
+Stopped at: Completed 02-05-PLAN.md — Fixed view_groups_raw/edit_groups_raw phantom key bug; View Groups and Edit Groups checkbox sections render correctly on add/edit forms (user-verified). ACL-02, ACL-03, DATA-01 satisfied.
 Resume file: None

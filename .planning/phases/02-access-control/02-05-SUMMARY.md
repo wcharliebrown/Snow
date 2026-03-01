@@ -34,20 +34,20 @@ patterns-established:
 requirements-completed: [ACL-02, ACL-03, DATA-01]
 
 # Metrics
-duration: 1min
+duration: 20min
 completed: 2026-03-01
 ---
 
 # Phase 2 Plan 05: Group Selector Repopulation Bug Fix Summary
 
-**Fixed $_POST['view_groups_raw'] / $_POST['edit_groups_raw'] key error that prevented View Groups and Edit Groups sections from rendering on admin-custom-table.php add/edit forms**
+**Fixed $_POST['view_groups_raw'] / $_POST['edit_groups_raw'] phantom key error so View Groups and Edit Groups checkbox sections now render and repopulate correctly on admin-custom-table.php add/edit forms**
 
 ## Performance
 
-- **Duration:** < 1 min
+- **Duration:** ~20 min (including human-verify checkpoint)
 - **Started:** 2026-03-01T19:12:19Z
-- **Completed:** 2026-03-01T19:12:54Z
-- **Tasks:** 1 of 2 complete (Task 2 is checkpoint:human-verify — awaiting user)
+- **Completed:** 2026-03-01
+- **Tasks:** 2 of 2 complete
 - **Files modified:** 1
 
 ## Accomplishments
@@ -55,14 +55,15 @@ completed: 2026-03-01
 - Fixed add form: `$_POST['view_groups_raw']` (nonexistent key) replaced with `(array)($_POST['view_groups'] ?? [])` — correctly reads PHP's delivered array from `name="view_groups[]"` inputs
 - Fixed edit form: replaced single-expression fallback with REQUEST_METHOD branch — GET reads DB comma-string via explode(), POST reads submitted array directly
 - PHP lint passes clean; `view_groups_raw` and `edit_groups_raw` have zero occurrences in file; HTML `name="view_groups[]"` and `name="edit_groups[]"` inputs unchanged (2 each)
+- User confirmed: "That works and the groups also show when editing an item" — View Groups and Edit Groups sections visible on both add and edit forms
+- UAT Tests 3, 4, 5 unblocked; UAT Tests 6-9 (view_groups/edit_groups saving and ACL enforcement) are now testable
 
 ## Task Commits
 
 Each task was committed atomically:
 
 1. **Task 1: Fix view_groups_raw / edit_groups_raw repopulation bug in add form and edit form** - `0e8eee1` (fix)
-
-**Note:** Task 2 (checkpoint:human-verify) is pending user visual verification.
+2. **Task 2: Verify View Groups and Edit Groups sections render on add and edit forms** - checkpoint approved by user
 
 ## Files Created/Modified
 
@@ -70,16 +71,30 @@ Each task was committed atomically:
 
 ## Decisions Made
 
-- Add form uses `(array)($_POST['view_groups'] ?? [])` — no DB fallback needed since this is a new record
+- Add form uses `(array)($_POST['view_groups'] ?? [])` — no DB fallback needed since this is a new record; the (array) cast is safe for both the submitted-array case and the no-submission case
 - Edit form uses `$_SERVER['REQUEST_METHOD'] === 'POST'` guard to choose between submitted array (POST) and DB comma-string (GET) — required because on GET the DB value is a VARCHAR string needing explode(), not an array
 
 ## Deviations from Plan
 
-None - plan executed exactly as written.
+### Additional Fix (DB-only, discovered during human verification)
+
+**tables_list report template — added "Data" button linking to /admin/data/{table_name}**
+
+- **Found during:** Task 2 (human-verify checkpoint) — user could not navigate from the admin tables list to a specific table's data page to test the group widget
+- **Issue:** The `tables_list` report template in the `report_templates` database table was missing a "Data" button. The row template did not include the `table_name` field or any link to `/admin/data/{table_name}`, making it impossible to reach the add/edit forms needed for verification.
+- **Fix:** Direct database UPDATE to `report_templates` WHERE `name = 'tables_list'` — added `table_name` as a plain SQL field to the field list and a green "Data" button linking to `/admin/data/{table_name}` to the row template HTML.
+- **Files modified:** None (DB-only change — no PHP file was modified)
+- **Verification:** User confirmed navigation from the tables list to the data page worked after the fix, and that the group widget was visible and functional.
+- **Committed in:** Not committed — database-only change; report_template content is not version-controlled as PHP source.
+
+---
+
+**Total deviations:** 1 additional DB fix (out-of-band, discovered during verification)
+**Impact on plan:** The DB fix was necessary to complete the human-verify step. No PHP source changes beyond the two planned edits.
 
 ## Issues Encountered
 
-None. Both edits matched exactly as described in the plan's interface documentation.
+During the human-verify checkpoint, the user discovered they could not navigate to a table's data page from the admin tables list because the `tables_list` report template lacked a "Data" button. This was resolved via a direct DB UPDATE before the user could complete group widget verification. See Deviations section above.
 
 ## User Setup Required
 
@@ -87,10 +102,10 @@ None - no external service configuration required.
 
 ## Next Phase Readiness
 
-- Task 1 complete and committed. The PHP fix removes the incorrect key access that was the suspected cause of PHP warnings suppressing the View Groups / Edit Groups HTML sections.
-- Task 2 (human-verify) is the checkpoint: user must open an add/edit form in the browser and confirm the View Groups and Edit Groups checkbox sections are visible.
-- UAT Tests 3, 4, 5 should pass after visual verification.
-- UAT Tests 6-9 are unblocked once visibility is confirmed (they test view_groups/edit_groups saving and ACL enforcement).
+- Group widget renders and repopulates correctly on add and edit forms (user-verified)
+- UAT Tests 3, 4, 5 are unblocked and expected passing
+- UAT Tests 6-9 (view_groups and edit_groups saving, ACL enforcement) are unblocked
+- Phase 2 ACL enforcement is complete end-to-end; phase can be declared done pending any remaining UAT sign-off
 
 ---
 *Phase: 02-access-control*
