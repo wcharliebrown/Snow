@@ -18,8 +18,8 @@ Requirements for initial release. Each maps to a roadmap phase.
 ### Access Control
 
 - [x] **ACL-01**: Users can belong to any number of groups
-- [ ] **ACL-02**: Each managed table row has a view_groups field; only users in matching groups can view the row
-- [ ] **ACL-03**: Each managed table row has an edit_groups field; only users in matching groups can edit the row (separate from view)
+- [x] **ACL-02**: Each managed table row has a view_groups field; only users in matching groups can view the row
+- [x] **ACL-03**: Each managed table row has an edit_groups field; only users in matching groups can edit the row (separate from view)
 
 ### Data Management
 
@@ -82,8 +82,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SEC-04 | Phase 1 | Complete |
 | SEC-05 | Phase 4 | Pending |
 | ACL-01 | Phase 2 | Complete |
-| ACL-02 | Phase 2 | Pending |
-| ACL-03 | Phase 2 | Pending |
+| ACL-02 | Phase 2 | Complete |
+| ACL-03 | Phase 2 | Complete |
 | DATA-01 | Phase 2 | Complete |
 | DATA-02 | Phase 5 | Pending |
 | DATA-03 | Phase 5 | Pending |
