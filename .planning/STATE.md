@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-02-28T18:52:42.813Z"
+last_updated: "2026-03-01T16:50:37Z"
 progress:
-  total_phases: 1
+  total_phases: 5
   completed_phases: 1
-  total_plans: 6
-  completed_plans: 6
+  total_plans: 10
+  completed_plans: 7
 ---
 
 # Project State
@@ -18,16 +18,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-02-27)
 
 **Core value:** Any table in the database can be managed through a consistent, ACL-controlled admin interface with full versioning and rollback — without writing boilerplate for each new table.
-**Current focus:** Phase 1 — Security Foundations
+**Current focus:** Phase 2 — Access Control
 
 ## Current Position
 
-Phase: 1 of 5 (Security Foundations) — COMPLETE
-Plan: 6 of 6 in current phase — ALL PLANS COMPLETE
-Status: Complete
-Last activity: 2026-02-28 — Plan 01-06 complete: admin sessions viewer with force-logout and admin password policy config UI; both pages registered in DB at admin/sessions and admin/password-policy
+Phase: 2 of 5 (Access Control) — IN PROGRESS
+Plan: 4 of ? in current phase (02-04 complete)
+Status: In Progress
+Last activity: 2026-03-01 — Plan 02-04 complete: group membership checkbox widget and DELETE+INSERT save logic added to admin user edit page
 
-Progress: [██████████] 100% (Phase 01 complete)
+Progress: [████░░░░░░] 40% (Phase 01 complete, Phase 02 in progress)
 
 ## Performance Metrics
 
@@ -41,9 +41,10 @@ Progress: [██████████] 100% (Phase 01 complete)
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-security-foundations | 6 | 68 min | 11.3 min |
+| 02-access-control | 1 | 1 min | 1 min |
 
 **Recent Trend:**
-- Last 6 plans: 01-01 (20 min), 01-02 (5 min), 01-03 (3 min), 01-04 (10 min), 01-05 (15 min), 01-06 (15 min)
+- Last 7 plans: 01-01 (20 min), 01-02 (5 min), 01-03 (3 min), 01-04 (10 min), 01-05 (15 min), 01-06 (15 min), 02-04 (1 min)
 - Trend: Stable
 
 *Updated after each plan completion*
@@ -76,6 +77,8 @@ Recent decisions affecting current work:
 - [Phase 01-05]: EMAIL badge colour set to success (green) rather than warning (yellow) to distinguish from TRAFFIC (grey)
 - [Phase 01-06]: Force-logout by numeric row id: query sessions.session_id WHERE id=?, call forceLogoutSession(string) — avoids exposing raw session tokens in HTML
 - [Phase 01-06]: admin/sessions uses admin_access permission (super-admin only); admin/password-policy uses user_management
+- [Phase 02-04]: DELETE+INSERT approach for group membership saves — single code path handles add, remove, and no-change uniformly
+- [Phase 02-04]: POST validation failure re-check uses submitted $groups values, not DB values — preserves user input on error redisplay
 
 ### Pending Todos
 
@@ -89,6 +92,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-02-28
-Stopped at: Completed 01-06-PLAN.md — Phase 01 Security Foundations complete. Admin sessions viewer + password policy config UI registered in DB. Ready for Phase 02.
+Last session: 2026-03-01
+Stopped at: Completed 02-04-PLAN.md — Group membership widget and save logic added to admin user edit page. ACL-01 satisfied.
 Resume file: None
