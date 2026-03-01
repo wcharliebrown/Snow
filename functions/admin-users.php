@@ -91,6 +91,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
                 if (!$error) {
                     dbUpdate('users', $fields, 'id = ?', [$userId]);
+                    // Save group memberships: delete all existing, insert new selections
+                    $newGroupIds = array_filter(array_map('intval', (array)($_POST['groups'] ?? [])));
+                    dbQuery("DELETE FROM user_groups WHERE user_id = ?", [$userId]);
+                    foreach ($newGroupIds as $gid) {
+                        dbInsert('user_groups', [
+                            'user_id'      => $userId,
+                            'group_id'     => $gid,
+                            'created_date' => date('Y-m-d H:i:s'),
+                        ]);
+                    }
                     header('Location: /admin/users?msg=updated');
                     exit;
                 }
