@@ -23,7 +23,7 @@ Requirements for initial release. Each maps to a roadmap phase.
 
 ### Data Management
 
-- [ ] **DATA-01**: Every managed table automatically has standard fields: created_at, modified_at, status, view_groups, edit_groups
+- [x] **DATA-01**: Every managed table automatically has standard fields: created_at, modified_at, status, view_groups, edit_groups
 - [ ] **DATA-02**: Admin can add custom fields to any custom table via admin UI
 - [ ] **DATA-03**: Admin can customize the edit form layout for each table
 - [ ] **DATA-04**: User can search, sort, and filter records on any list view using UI controls
@@ -84,7 +84,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ACL-01 | Phase 2 | Complete |
 | ACL-02 | Phase 2 | Pending |
 | ACL-03 | Phase 2 | Pending |
-| DATA-01 | Phase 2 | Pending |
+| DATA-01 | Phase 2 | Complete |
 | DATA-02 | Phase 5 | Pending |
 | DATA-03 | Phase 5 | Pending |
 | DATA-04 | Phase 5 | Pending |

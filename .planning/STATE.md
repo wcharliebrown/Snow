@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-01T16:50:37Z"
+last_updated: "2026-03-01T16:51:30Z"
 progress:
   total_phases: 5
   completed_phases: 1
   total_plans: 10
-  completed_plans: 7
+  completed_plans: 8
 ---
 
 # Project State
@@ -23,11 +23,11 @@ See: .planning/PROJECT.md (updated 2026-02-27)
 ## Current Position
 
 Phase: 2 of 5 (Access Control) — IN PROGRESS
-Plan: 4 of ? in current phase (02-04 complete)
+Plan: 2 of TBD in current phase (02-02 complete — backfilled)
 Status: In Progress
-Last activity: 2026-03-01 — Plan 02-04 complete: group membership checkbox widget and DELETE+INSERT save logic added to admin user edit page
+Last activity: 2026-03-01 — Plan 02-02 complete: provisionCustomTable() updated with Phase 2 6-column schema (status, view_groups, edit_groups, created_at, modified_at); migrateExistingCustomTables() added; database_schema.sql documented
 
-Progress: [████░░░░░░] 40% (Phase 01 complete, Phase 02 in progress)
+Progress: [████░░░░░░] 40% (Phase 01 complete, Phase 02 plans 01-02 done)
 
 ## Performance Metrics
 
@@ -77,6 +77,10 @@ Recent decisions affecting current work:
 - [Phase 01-05]: EMAIL badge colour set to success (green) rather than warning (yellow) to distinguish from TRAFFIC (grey)
 - [Phase 01-06]: Force-logout by numeric row id: query sessions.session_id WHERE id=?, call forceLogoutSession(string) — avoids exposing raw session tokens in HTML
 - [Phase 01-06]: admin/sessions uses admin_access permission (super-admin only); admin/password-policy uses user_management
+- [Phase 02-02]: updated_at column left in place on pre-Phase-2 tables — not renamed to modified_at — to avoid breaking existing report templates
+- [Phase 02-02]: migrateExistingCustomTables() called on every admin-tables.php page load (INFORMATION_SCHEMA guards make it idempotent)
+- [Phase 02-02]: view_groups/edit_groups stored as VARCHAR(500) comma-separated group IDs; NULL means open to all table_management users
+- [Phase 02-02]: status uses VARCHAR(20) not ENUM to allow future lifecycle states without schema migration
 - [Phase 02-04]: DELETE+INSERT approach for group membership saves — single code path handles add, remove, and no-change uniformly
 - [Phase 02-04]: POST validation failure re-check uses submitted $groups values, not DB values — preserves user input on error redisplay
 
@@ -93,5 +97,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-01
-Stopped at: Completed 02-04-PLAN.md — Group membership widget and save logic added to admin user edit page. ACL-01 satisfied.
+Stopped at: Completed 02-02-PLAN.md (backfilled) — provisionCustomTable updated with Phase 2 6-column schema; migrateExistingCustomTables() added to admin-tables.php; database_schema.sql Phase 2 section documented. DATA-01 satisfied.
 Resume file: None
