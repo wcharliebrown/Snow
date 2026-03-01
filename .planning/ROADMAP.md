@@ -48,7 +48,15 @@ Plans:
   2. A user in view_groups but not edit_groups for a row can view it but cannot save changes
   3. Every newly provisioned custom table automatically has view_groups, edit_groups, created_at, modified_at, and status columns
   4. Admin can set group membership for any user from the user edit page
-**Plans**: TBD
+**Plans**: 6 plans
+
+Plans:
+- [x] 02-01-PLAN.md — DB schema: standard ACL columns + group membership junction
+- [x] 02-02-PLAN.md — provisionCustomTable() + migrateExistingCustomTables() standard column enforcement
+- [x] 02-03-PLAN.md — admin-custom-table.php: list ACL filter + edit view-only mode + POST gate
+- [x] 02-04-PLAN.md — admin-users.php: group membership widget on user edit page
+- [x] 02-05-PLAN.md — Fix view_groups_raw/edit_groups_raw phantom key bug in add/edit forms
+- [ ] 02-06-PLAN.md — Gap closure: table_data_access permission; non-admin users can reach custom table data pages
 
 ### Phase 3: Data Integrity
 **Goal**: Every write to a managed table is recorded with before/after state and author; admins can roll back any row to any prior version; full-table snapshots can be created, diffed against live data, and restored.
@@ -92,7 +100,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Security Foundations | 4/6 | In Progress|  |
-| 2. Access Control | 5/5 | Complete   | 2026-03-01 |
+| 2. Access Control | 5/6 | In Progress (gap closure) | - |
 | 3. Data Integrity | 0/TBD | Not started | - |
 | 4. Extensibility | 0/TBD | Not started | - |
 | 5. User Experience | 0/TBD | Not started | - |
