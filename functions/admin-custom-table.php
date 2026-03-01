@@ -166,9 +166,9 @@ if ($action === 'add') {
     $allGroups = dbGetRows("SELECT id, name FROM user_groups_list WHERE status = 'active' ORDER BY name", []);
     $currentRecord = [];
     $currentViewGroups = array_filter(array_map('intval',
-        explode(',', $_POST['view_groups_raw'] ?? '')));
+        (array)($_POST['view_groups'] ?? [])));
     $currentEditGroups = array_filter(array_map('intval',
-        explode(',', $_POST['edit_groups_raw'] ?? '')));
+        (array)($_POST['edit_groups'] ?? [])));
     ?>
     <?php if ($error): ?><div class="alert alert-danger"><?= $error ?></div><?php endif; ?>
     <a href="/<?= htmlspecialchars($page['path']) ?>" class="btn btn-secondary btn-sm mb-3">&larr; Back to <?= htmlspecialchars($displayName) ?></a>
@@ -270,10 +270,18 @@ if ($action === 'add') {
         // Load all active groups for the ACL selector widget
         $allGroups = dbGetRows("SELECT id, name FROM user_groups_list WHERE status = 'active' ORDER BY name", []);
         $currentRecord = $record;
-        $currentViewGroups = array_filter(array_map('intval',
-            explode(',', $_POST['view_groups_raw'] ?? $currentRecord['view_groups'] ?? '')));
-        $currentEditGroups = array_filter(array_map('intval',
-            explode(',', $_POST['edit_groups_raw'] ?? $currentRecord['edit_groups'] ?? '')));
+        // On POST repopulation: use submitted array. On fresh GET: parse DB comma-separated string.
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $currentViewGroups = array_filter(array_map('intval',
+                (array)($_POST['view_groups'] ?? [])));
+            $currentEditGroups = array_filter(array_map('intval',
+                (array)($_POST['edit_groups'] ?? [])));
+        } else {
+            $currentViewGroups = array_filter(array_map('intval',
+                explode(',', $currentRecord['view_groups'] ?? '')));
+            $currentEditGroups = array_filter(array_map('intval',
+                explode(',', $currentRecord['edit_groups'] ?? '')));
+        }
         ?>
         <?php if ($error): ?><div class="alert alert-danger"><?= $error ?></div><?php endif; ?>
         <a href="/<?= htmlspecialchars($page['path']) ?>" class="btn btn-secondary btn-sm mb-3">&larr; Back to <?= htmlspecialchars($displayName) ?></a>
