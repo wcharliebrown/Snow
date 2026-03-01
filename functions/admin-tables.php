@@ -15,6 +15,10 @@ $tableId = isset($_GET['id']) ? (int)$_GET['id'] : null;
 $message = '';
 $error   = '';
 
+// Phase 2: ensure all existing custom tables have standard columns.
+// This is idempotent — safe to call on every page load (INFORMATION_SCHEMA check prevents duplicate ALTERs).
+migrateExistingCustomTables();
+
 function getCustomTableById(int $id): array|false {
     return dbGetRow("SELECT * FROM custom_tables WHERE id = ?", [$id]);
 }
@@ -111,9 +115,12 @@ function provisionCustomTable(array $tableDef): void {
 
     // Create MySQL table
     dbQuery("CREATE TABLE IF NOT EXISTS `{$tableName}` (
-        `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-        `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        `id`          INT          NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        `status`      VARCHAR(20)  NOT NULL DEFAULT 'active',
+        `view_groups` VARCHAR(500) DEFAULT NULL,
+        `edit_groups` VARCHAR(500) DEFAULT NULL,
+        `created_at`  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        `modified_at` DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
 
     // Create admin page if not exists
@@ -132,6 +139,44 @@ function provisionCustomTable(array $tableDef): void {
 
     // Create/update report
     generateCustomTableReport($tableName);
+}
+
+/**
+ * Add standard Phase 2 columns to any custom tables that were provisioned before Phase 2.
+ * Idempotent: uses INFORMATION_SCHEMA checks so it is safe to call multiple times.
+ * Existing `updated_at` columns are left in place (not renamed) to avoid breaking
+ * any report templates that reference that column name.
+ */
+function migrateExistingCustomTables(): void {
+    $tables = dbGetRows("SELECT table_name FROM custom_tables WHERE status = 'active'", []);
+    $standardCols = [
+        'status'      => "VARCHAR(20) NOT NULL DEFAULT 'active'",
+        'view_groups' => 'VARCHAR(500) DEFAULT NULL',
+        'edit_groups' => 'VARCHAR(500) DEFAULT NULL',
+        'created_at'  => 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP',
+        'modified_at' => 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP',
+    ];
+    foreach ($tables as $t) {
+        $tableName = $t['table_name'];
+        // Verify the MySQL table actually exists before ALTER
+        $tableExists = dbGetRow(
+            "SELECT COUNT(*) AS n FROM INFORMATION_SCHEMA.TABLES
+             WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?",
+            [$tableName]
+        );
+        if (empty($tableExists['n'])) continue;
+
+        foreach ($standardCols as $colName => $colDef) {
+            $exists = dbGetRow(
+                "SELECT COUNT(*) AS n FROM INFORMATION_SCHEMA.COLUMNS
+                 WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?",
+                [$tableName, $colName]
+            );
+            if (empty($exists['n'])) {
+                dbQuery("ALTER TABLE `{$tableName}` ADD COLUMN `{$colName}` {$colDef}");
+            }
+        }
+    }
 }
 
 function decommissionCustomTable(array $tableDef): void {
@@ -250,9 +295,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 );
                 if (!$tableExists || $tableExists['n'] == 0) {
                     dbQuery("CREATE TABLE IF NOT EXISTS `{$ct['table_name']}` (
-                        `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-                        `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                        `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+                        `id`          INT          NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                        `status`      VARCHAR(20)  NOT NULL DEFAULT 'active',
+                        `view_groups` VARCHAR(500) DEFAULT NULL,
+                        `edit_groups` VARCHAR(500) DEFAULT NULL,
+                        `created_at`  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                        `modified_at` DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
                     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
                 }
                 // Add MySQL column if not already present
