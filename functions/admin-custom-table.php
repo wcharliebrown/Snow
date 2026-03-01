@@ -7,7 +7,7 @@
 
 require_once __DIR__ . '/acl.php';
 
-requirePermission('table_management');
+requirePermission('table_data_access');
 
 // Derive table name from URL path
 $pathParts = explode('/', $page['path'] ?? '');
@@ -57,9 +57,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $postAction = $_POST['action'] ?? $action;
 
     if ($postAction === 'add') {
-        // Serialize ACL group selections (NULL when none checked = open to all)
-        $viewGroupIds = array_filter(array_map('intval', (array)($_POST['view_groups'] ?? [])));
-        $editGroupIds  = array_filter(array_map('intval', (array)($_POST['edit_groups'] ?? [])));
+        // Only honour ACL group selections submitted by users with table_management
+        if (hasPermission('table_management')) {
+            $viewGroupIds = array_filter(array_map('intval', (array)($_POST['view_groups'] ?? [])));
+            $editGroupIds = array_filter(array_map('intval', (array)($_POST['edit_groups'] ?? [])));
+        } else {
+            $viewGroupIds = null;  // sentinel: do not write these columns
+            $editGroupIds = null;
+        }
 
         $rowData  = [];
         $hasError = false;
@@ -73,8 +78,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $rowData[$f['field_name']] = ($val !== '') ? $val : null;
         }
         if (!$hasError) {
-            $rowData['view_groups'] = !empty($viewGroupIds) ? implode(',', $viewGroupIds) : null;
-            $rowData['edit_groups']  = !empty($editGroupIds)  ? implode(',', $editGroupIds)  : null;
+            if ($viewGroupIds !== null) {
+                $rowData['view_groups'] = !empty($viewGroupIds) ? implode(',', $viewGroupIds) : null;
+            }
+            if ($editGroupIds !== null) {
+                $rowData['edit_groups'] = !empty($editGroupIds) ? implode(',', $editGroupIds) : null;
+            }
             // Standard field: status
             if (isset($_POST['status'])) {
                 $rowData['status'] = in_array($_POST['status'], ['active', 'inactive']) ? $_POST['status'] : 'active';
@@ -94,9 +103,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $hasError = true;
         }
 
-        // Serialize ACL group selections (NULL when none checked = open to all)
-        $viewGroupIds = array_filter(array_map('intval', (array)($_POST['view_groups'] ?? [])));
-        $editGroupIds  = array_filter(array_map('intval', (array)($_POST['edit_groups'] ?? [])));
+        // Only honour ACL group selections submitted by users with table_management
+        if (hasPermission('table_management')) {
+            $viewGroupIds = array_filter(array_map('intval', (array)($_POST['view_groups'] ?? [])));
+            $editGroupIds = array_filter(array_map('intval', (array)($_POST['edit_groups'] ?? [])));
+        } else {
+            $viewGroupIds = null;  // sentinel: do not write these columns
+            $editGroupIds = null;
+        }
 
         $rowData  = [];
         if (!isset($hasError)) { $hasError = false; }
@@ -111,8 +125,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $rowData[$f['field_name']] = ($val !== '') ? $val : null;
         }
         if (!$hasError) {
-            $rowData['view_groups'] = !empty($viewGroupIds) ? implode(',', $viewGroupIds) : null;
-            $rowData['edit_groups']  = !empty($editGroupIds)  ? implode(',', $editGroupIds)  : null;
+            if ($viewGroupIds !== null) {
+                $rowData['view_groups'] = !empty($viewGroupIds) ? implode(',', $viewGroupIds) : null;
+            }
+            if ($editGroupIds !== null) {
+                $rowData['edit_groups'] = !empty($editGroupIds) ? implode(',', $editGroupIds) : null;
+            }
             // Standard field: status
             if (isset($_POST['status'])) {
                 $rowData['status'] = in_array($_POST['status'], ['active', 'inactive']) ? $_POST['status'] : 'active';
@@ -198,6 +216,7 @@ if ($action === 'add') {
                     <option value="inactive" <?= (($_POST['status'] ?? '') === 'inactive') ? 'selected' : '' ?>>Inactive</option>
                 </select>
             </div>
+            <?php if (hasPermission('table_management')): ?>
             <!-- View Groups -->
             <div class="col-12">
                 <label class="form-label fw-semibold">View Groups <small class="text-muted fw-normal">(leave unchecked for all users)</small></label>
@@ -242,6 +261,7 @@ if ($action === 'add') {
                 <p class="text-muted small">No groups defined.</p>
                 <?php endif; ?>
             </div>
+            <?php endif; ?>
         </div>
         <div class="mt-3">
             <button type="submit" class="btn btn-success">Create</button>
@@ -307,6 +327,7 @@ if ($action === 'add') {
                         <option value="inactive" <?= (($_POST['status'] ?? $currentRecord['status'] ?? '') === 'inactive') ? 'selected' : '' ?>>Inactive</option>
                     </select>
                 </div>
+                <?php if (hasPermission('table_management')): ?>
                 <!-- View Groups -->
                 <div class="col-12">
                     <label class="form-label fw-semibold">View Groups <small class="text-muted fw-normal">(leave unchecked for all users)</small></label>
@@ -351,6 +372,7 @@ if ($action === 'add') {
                     <p class="text-muted small">No groups defined.</p>
                     <?php endif; ?>
                 </div>
+                <?php endif; ?>
             </div>
             <?php if (!$canEdit): ?>
             </fieldset>
