@@ -707,3 +707,45 @@ SET @sql = IF(@col_exists = 0,
 PREPARE stmt FROM @sql;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
+
+-- =============================================================================
+-- Phase 2: Access Control — Standard Custom Table Columns
+-- =============================================================================
+-- Every custom table provisioned from Phase 2 onward includes these columns.
+-- Tables provisioned before Phase 2 receive these columns via
+-- migrateExistingCustomTables() in functions/admin-tables.php.
+--
+-- Standard column definitions (applied by provisionCustomTable()):
+--
+--   `status`      VARCHAR(20)  NOT NULL DEFAULT 'active'
+--       Row lifecycle: 'active', 'inactive'. Enforced by application logic.
+--
+--   `view_groups` VARCHAR(500) DEFAULT NULL
+--       Comma-separated group IDs (e.g. '1,3,7'). NULL = open to all users
+--       with table_management permission. ACL check performed in PHP via
+--       canViewRow() in functions/acl.php using array_intersect().
+--
+--   `edit_groups` VARCHAR(500) DEFAULT NULL
+--       Comma-separated group IDs. NULL = any user who can view can also edit.
+--       ACL check performed in PHP via canEditRow() in functions/acl.php.
+--
+--   `created_at`  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+--       Row creation timestamp. Set automatically by MySQL on INSERT.
+--
+--   `modified_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+--       Row last-modified timestamp. Updated automatically by MySQL on any UPDATE.
+--       NOTE: Tables provisioned before Phase 2 may also have an `updated_at`
+--       column (the prior standard name). Both columns may coexist on legacy
+--       tables; `updated_at` is left in place to avoid breaking existing reports.
+--
+-- Full CREATE TABLE template for new custom tables:
+--
+-- CREATE TABLE IF NOT EXISTS `{table_name}` (
+--     `id`          INT          NOT NULL AUTO_INCREMENT PRIMARY KEY,
+--     `status`      VARCHAR(20)  NOT NULL DEFAULT 'active',
+--     `view_groups` VARCHAR(500) DEFAULT NULL,
+--     `edit_groups` VARCHAR(500) DEFAULT NULL,
+--     `created_at`  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+--     `modified_at` DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+-- ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+-- =============================================================================
