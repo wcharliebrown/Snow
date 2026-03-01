@@ -762,6 +762,13 @@ DEALLOCATE PREPARE stmt;
 INSERT IGNORE INTO permissions (name, description)
 VALUES ('table_data_access', 'Access custom table data pages (row-level ACL applied)');
 
+-- Grant table_data_access to any group that already holds table_management (idempotent)
+INSERT IGNORE INTO group_permissions (group_id, permission_id)
+SELECT gp.group_id, p.id
+FROM group_permissions gp
+JOIN permissions existing ON gp.permission_id = existing.id AND existing.name = 'table_management'
+JOIN permissions p ON p.name = 'table_data_access';
+
 -- Migrate already-provisioned admin/data/* pages from table_management to table_data_access
 UPDATE pages
 SET required_permission = 'table_data_access'
