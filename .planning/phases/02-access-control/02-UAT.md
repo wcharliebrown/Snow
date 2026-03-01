@@ -1,5 +1,5 @@
 ---
-status: complete
+status: diagnosed
 phase: 02-access-control
 source: 02-01-SUMMARY.md, 02-02-SUMMARY.md, 02-03-SUMMARY.md, 02-04-SUMMARY.md, 02-05-SUMMARY.md
 started: 2026-03-01T17:45:00Z
@@ -71,5 +71,18 @@ skipped: 3
   reason: "User reported: non-admin users get Access Denied on /admin and when navigating directly to custom table edit URLs. The table_management permission gate in admin-custom-table.php blocks all non-admin access, making row-level ACL filtering non-functional for its intended audience."
   severity: major
   test: 6
-  artifacts: []
-  missing: []
+  root_cause: "Two compounding gates both require table_management: (1) provisionCustomTable() registers admin/data/{table} pages with required_permission='table_management' in the pages table — the framework checks this before the script loads; (2) admin-custom-table.php line 10 has requirePermission('table_management') as an inner guard. No lower-level permission exists. Non-admin users hit both gates and never reach the ACL filtering logic."
+  artifacts:
+    - path: "functions/admin-tables.php"
+      issue: "provisionCustomTable() line 135: savePage() sets required_permission='table_management'; already-registered pages in DB are not updated on re-provision (skipped if page exists)"
+    - path: "functions/admin-custom-table.php"
+      issue: "line 10: requirePermission('table_management') inner gate — must match the page-level permission"
+    - path: "database_schema.sql"
+      issue: "No table_data_access permission exists in seed data; only table_management is defined for this purpose"
+  missing:
+    - "New table_data_access permission added to permissions table and assigned to appropriate groups"
+    - "provisionCustomTable() updated to use table_data_access for admin/data pages"
+    - "admin-custom-table.php line 10 gate changed to table_data_access"
+    - "Migration UPDATE for already-provisioned pages in the pages table"
+    - "Group selector widget (View Groups/Edit Groups) gated on hasPermission('table_management') so data-access users can't set ACL config"
+  debug_session: ""
