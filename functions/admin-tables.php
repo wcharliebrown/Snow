@@ -132,7 +132,7 @@ function provisionCustomTable(array $tableDef): void {
             'template_file'       => 'admin_page_template.html',
             'custom_script'       => 'admin-custom-table.php',
             'require_auth'        => 1,
-            'required_permission' => 'table_management',
+            'required_permission' => 'table_data_access',
             'status'              => 'active',
         ]);
     }

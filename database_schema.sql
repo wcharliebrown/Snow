@@ -749,3 +749,22 @@ DEALLOCATE PREPARE stmt;
 --     `modified_at` DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 -- ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 -- =============================================================================
+
+-- =============================================================================
+-- Phase 2 Gap Closure: table_data_access permission (2026-03-01)
+-- =============================================================================
+-- Separates "can access custom table data pages" from "can manage table definitions".
+-- Non-admin users assigned table_data_access can reach admin/data/* and have row-level
+-- ACL applied. table_management remains required for admin/tables (schema management)
+-- and for the View Groups / Edit Groups selectors within each data form.
+
+-- Add permission if not already present (idempotent)
+INSERT IGNORE INTO permissions (name, description)
+VALUES ('table_data_access', 'Access custom table data pages (row-level ACL applied)');
+
+-- Migrate already-provisioned admin/data/* pages from table_management to table_data_access
+UPDATE pages
+SET required_permission = 'table_data_access'
+WHERE path LIKE 'admin/data/%'
+  AND required_permission = 'table_management';
+-- =============================================================================
