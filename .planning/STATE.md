@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: completed
-stopped_at: Phase 3 context gathered
-last_updated: "2026-03-05T22:06:54.771Z"
-last_activity: "2026-03-01 — Plan 02-06 complete: table_data_access permission introduced; non-admin users can reach admin/data/* with row-level ACL applied; human-verified passing. Phase 2 fully complete."
+status: executing
+stopped_at: Completed 03-02-PLAN.md
+last_updated: "2026-03-05T22:28:05.697Z"
+last_activity: "2026-03-05 — Plan 03-01 complete: Phase 3 test scaffold created; VER-04 diff algorithm tests passing; VER-01 schema stubs failing as expected; all Phase 3 plans have runnable automated verify."
 progress:
   total_phases: 5
   completed_phases: 2
-  total_plans: 12
-  completed_plans: 12
-  percent: 100
+  total_plans: 18
+  completed_plans: 14
+  percent: 40
 ---
 
 # Project State
@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-02-27)
 
 ## Current Position
 
-Phase: 2 of 5 (Access Control) — COMPLETE
-Plan: 6 of 6 in current phase (02-06 complete)
-Status: Complete
-Last activity: 2026-03-01 — Plan 02-06 complete: table_data_access permission introduced; non-admin users can reach admin/data/* with row-level ACL applied; human-verified passing. Phase 2 fully complete.
+Phase: 3 of 5 (Data Integrity) — IN PROGRESS
+Plan: 1 of 6 in current phase (03-01 complete)
+Status: In Progress
+Last activity: 2026-03-05 — Plan 03-01 complete: Phase 3 test scaffold created; VER-04 diff algorithm tests passing; VER-01 schema stubs failing as expected; all Phase 3 plans have runnable automated verify.
 
-Progress: [██████████] 100% (Phase 01 complete, Phase 02 complete — all 6 plans done)
+Progress: [████░░░░░░] 40% (Phase 01 complete, Phase 02 complete, Phase 03 plan 1/6 done)
 
 ## Performance Metrics
 
@@ -53,6 +53,7 @@ Progress: [██████████] 100% (Phase 01 complete, Phase 02 com
 *Updated after each plan completion*
 | Phase 02-access-control P05 | 1 | 1 tasks | 1 files |
 | Phase 02-access-control P06 | 45 | 3 tasks | 3 files |
+| Phase 03-data-integrity P02 | 5 | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -96,6 +97,8 @@ Recent decisions affecting current work:
 - [Phase 02-access-control]: table_data_access is a separate permission from table_management — data users reach admin/data/* but cannot touch schema or ACL group assignments
 - [Phase 02-access-control]: Sentinel null ($viewGroupIds = null) used to distinguish do-not-write from empty-array (open-to-all) in POST handlers
 - [Phase 02-access-control]: When splitting a permission, always grant the new child to groups already holding the parent — prevents admin privilege regression
+- [Phase 03-data-integrity]: Phase 3 migration extracted via sed to avoid re-running Phase 1/2 INSERT blocks; ALTER TABLE uses INFORMATION_SCHEMA PREPARE/EXECUTE guard (MySQL 8.0 compatible, same pattern as 01-01)
+- [Phase 03-data-integrity]: Phase-delimited migration blocks pattern: each phase appends a labelled SQL block enabling targeted sed extraction for idempotent re-runs
 
 ### Pending Todos
 
@@ -109,6 +112,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-05T22:06:54.768Z
-Stopped at: Phase 3 context gathered
-Resume file: .planning/phases/03-data-integrity/03-CONTEXT.md
+Last session: 2026-03-05T22:27:56.510Z
+Stopped at: Completed 03-02-PLAN.md
+Resume file: None
