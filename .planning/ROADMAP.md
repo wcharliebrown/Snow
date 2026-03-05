@@ -68,7 +68,15 @@ Plans:
   3. Admin can create a named snapshot of any custom table that captures all current row data
   4. Admin can view a diff between a snapshot and the current table state showing added, removed, and changed rows
   5. Admin can restore a table to the state of any prior snapshot
-**Plans**: TBD
+**Plans**: 6 plans
+
+Plans:
+- [ ] 03-01-PLAN.md — Test scaffold: test_data_integrity.php stubs for VER-01 through VER-05
+- [ ] 03-02-PLAN.md — DB migration: row_versions table + snapshot_table column on snapshots
+- [ ] 03-03-PLAN.md — Row version capture in admin-custom-table.php edit POST handler (VER-01)
+- [ ] 03-04-PLAN.md — Snapshot create fix (CREATE TABLE AS SELECT) + diff view (VER-03, VER-04)
+- [ ] 03-05-PLAN.md — Row diff/revert UI on edit form + revert POST handler (VER-02)
+- [ ] 03-06-PLAN.md — Snapshot restore: confirmation page + atomic rename sequence (VER-05)
 
 ### Phase 4: Extensibility
 **Goal**: Admins can register PHP hook files that fire on row events for any table; users can complete login with an email OTP as a second factor; admins can create custom web pages and email templates served by the framework.
@@ -101,7 +109,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 |-------|----------------|--------|-----------|
 | 1. Security Foundations | 4/6 | In Progress|  |
 | 2. Access Control | 6/6 | Complete   | 2026-03-01 |
-| 3. Data Integrity | 0/TBD | Not started | - |
+| 3. Data Integrity | 0/6 | Not started | - |
 | 4. Extensibility | 0/TBD | Not started | - |
 | 5. User Experience | 0/TBD | Not started | - |
 
