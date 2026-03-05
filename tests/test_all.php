@@ -1673,6 +1673,9 @@ $t->describe('Admin Groups HTTP', function (SnowTestRunner $t) {
     });
 });
 
+// Phase 3: Data Integrity tests
+require_once __DIR__ . '/test_data_integrity.php';
+
 // ─────────────────────────────────────────────────────────────────────────────
 // SUMMARY
 // ─────────────────────────────────────────────────────────────────────────────
