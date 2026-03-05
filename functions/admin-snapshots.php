@@ -37,16 +37,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $error = "Table '$tableName' does not exist.";
         } else {
             $rowCount = dbGetRow("SELECT COUNT(*) AS n FROM `$tableName`", [])['n'] ?? 0;
-            dbInsert('snapshots', [
-                'table_name'    => $tableName,
-                'snapshot_name' => $snapshotName,
-                'description'   => $description,
-                'snapshot_date' => date('Y-m-d H:i:s'),
-                'row_count'     => (int)$rowCount,
-                'file_path'     => null,
-                'status'        => 'active',
-                'created_by'    => $currentUser['id'] ?? null,
+            // Generate physical snapshot table name with random suffix to prevent collision (Pitfall 1)
+            $snapshotTableName = 'snapshot_' . $tableName . '_' . date('YmdHis') . rand(100, 999);
+            $snapshotId = dbInsert('snapshots', [
+                'table_name'     => $tableName,
+                'snapshot_name'  => $snapshotName,
+                'snapshot_table' => $snapshotTableName,
+                'description'    => $description,
+                'snapshot_date'  => date('Y-m-d H:i:s'),
+                'row_count'      => (int)$rowCount,
+                'file_path'      => null,
+                'status'         => 'active',
+                'created_by'     => $currentUser['id'] ?? null,
             ]);
+            // VER-03: Copy all rows into a new MySQL table (CREATE TABLE AS SELECT does not copy indexes or FKs — correct for snapshots)
+            dbQuery("CREATE TABLE `{$snapshotTableName}` AS SELECT * FROM `{$tableName}`", []);
             header('Location: /admin/snapshots?msg=created');
             exit;
         }
@@ -70,9 +75,9 @@ if (isset($_GET['msg'])) {
 $snapshotCount = dbGetRow("SELECT COUNT(*) AS n FROM snapshots WHERE status = 'active'", [])['n'] ?? 0;
 $listReport    = getReportByName('snapshots_list');
 
-// Tables list for the create form
-$tables = dbGetRows("SHOW TABLES", []);
-$tableNames = array_map(fn($r) => reset($r), $tables);
+// Only show custom-provisioned tables (not snapshot_ tables or system tables) — Pitfall 4
+$customTables = dbGetRows("SELECT table_name FROM custom_tables WHERE status = 'active' ORDER BY table_name", []);
+$tableNames = array_column($customTables, 'table_name');
 
 // ── Build content ─────────────────────────────────────────────────────────────
 

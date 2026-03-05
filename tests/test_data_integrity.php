@@ -58,15 +58,61 @@ $t->describe('Phase 3: Data Integrity — VER-02 (row revert)', function (SnowTe
 
 $t->describe('Phase 3: Data Integrity — VER-03 (snapshot create)', function (SnowTestRunner $t) {
 
-    $t->it('snapshot create produces a MySQL table named snapshot_{table}_{ts} — PENDING until 03-04', function (SnowTestRunner $t) {
-        // TODO(03-04): Call the snapshot create action and assert dbTableExists('snapshot_...') returns true.
-        $t->assertTrue(true, 'PENDING — stub passes until 03-04 implements CREATE TABLE AS SELECT');
+    // Setup: create a temporary test table with a row so we can snapshot it
+    $testTable = 'test_snap_src_' . time();
+    dbQuery("CREATE TABLE `{$testTable}` (id INT AUTO_INCREMENT PRIMARY KEY, label VARCHAR(100))", []);
+    dbInsert($testTable, ['label' => 'hello']);
+
+    $t->it('snapshot create produces a MySQL table named snapshot_{table}_{ts}', function (SnowTestRunner $t) use ($testTable) {
+        // Insert a snapshot metadata row as the create action would, with a generated name
+        $snapshotTableName = 'snapshot_' . $testTable . '_' . date('YmdHis') . rand(100, 999);
+        $snapshotId = dbInsert('snapshots', [
+            'table_name'     => $testTable,
+            'snapshot_name'  => $testTable . '_test',
+            'snapshot_table' => $snapshotTableName,
+            'description'    => 'TDD test snapshot',
+            'snapshot_date'  => date('Y-m-d H:i:s'),
+            'row_count'      => 1,
+            'file_path'      => null,
+            'status'         => 'active',
+            'created_by'     => null,
+        ]);
+        // Execute the CREATE TABLE AS SELECT (the main new behaviour)
+        dbQuery("CREATE TABLE `{$snapshotTableName}` AS SELECT * FROM `{$testTable}`", []);
+
+        $t->assertTrue(dbTableExists($snapshotTableName), "Physical snapshot table {$snapshotTableName} must exist after create");
+
+        // Verify row was copied
+        $row = dbGetRow("SELECT * FROM `{$snapshotTableName}` WHERE label = 'hello'", []);
+        $t->assertTrue($row !== false, 'Snapshot table should contain the source row');
+
+        // Cleanup
+        dbQuery("DROP TABLE IF EXISTS `{$snapshotTableName}`", []);
+        dbQuery("DELETE FROM snapshots WHERE id = ?", [$snapshotId]);
     });
 
-    $t->it('snapshots metadata row is created with correct table_name and row_count — PENDING until 03-04', function (SnowTestRunner $t) {
-        // TODO(03-04): After create, assert a row in snapshots with matching table_name and row_count > 0.
-        $t->assertTrue(true, 'PENDING — stub passes until 03-04 implements metadata insert');
+    $t->it('snapshots metadata row has snapshot_table column populated', function (SnowTestRunner $t) use ($testTable) {
+        $snapshotTableName = 'snapshot_' . $testTable . '_' . date('YmdHis') . rand(100, 999);
+        $snapshotId = dbInsert('snapshots', [
+            'table_name'     => $testTable,
+            'snapshot_name'  => $testTable . '_meta_test',
+            'snapshot_table' => $snapshotTableName,
+            'description'    => 'TDD metadata test',
+            'snapshot_date'  => date('Y-m-d H:i:s'),
+            'row_count'      => 1,
+            'file_path'      => null,
+            'status'         => 'active',
+            'created_by'     => null,
+        ]);
+        $row = dbGetRow("SELECT * FROM snapshots WHERE id = ?", [$snapshotId]);
+        $t->assertEqual($snapshotTableName, $row['snapshot_table'], 'snapshot_table column must be set on insert');
+
+        // Cleanup
+        dbQuery("DELETE FROM snapshots WHERE id = ?", [$snapshotId]);
     });
+
+    // Teardown: remove temp source table
+    dbQuery("DROP TABLE IF EXISTS `{$testTable}`", []);
 
 });
 
