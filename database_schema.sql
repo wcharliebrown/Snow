@@ -775,3 +775,46 @@ SET required_permission = 'table_data_access'
 WHERE path LIKE 'admin/data/%'
   AND required_permission = 'table_management';
 -- =============================================================================
+
+-- =============================================================================
+-- Phase 3: Data Integrity — Migration
+-- =============================================================================
+
+-- VER-01: Row version history table
+-- Stores a full JSON before-image of each row before every edit.
+-- Only edits (UPDATEs) create entries — inserts and deletes do not.
+CREATE TABLE IF NOT EXISTS row_versions (
+    id           INT          NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    table_name   VARCHAR(255) NOT NULL,
+    row_id       INT          NOT NULL,
+    changed_by   INT          NULL,
+    changed_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    row_snapshot JSON         NOT NULL,
+    FOREIGN KEY (changed_by) REFERENCES users(id) ON DELETE SET NULL,
+    INDEX idx_table_row   (table_name, row_id),
+    INDEX idx_changed_at  (changed_at),
+    INDEX idx_changed_by  (changed_by)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- VER-03/VER-05: Add physical snapshot table name column to snapshots metadata.
+-- Stores the actual MySQL table name (e.g. snapshot_products_20260305143022)
+-- so restore can look it up unambiguously without string reconstruction.
+-- Uses INFORMATION_SCHEMA guard for idempotency (MySQL 8.0 compatible).
+SET @dbname = DATABASE();
+SET @tblname = 'snapshots';
+SET @colname = 'snapshot_table';
+SET @preparedStatement = (
+    SELECT IF(
+        COUNT(*) = 0,
+        'ALTER TABLE snapshots ADD COLUMN snapshot_table VARCHAR(255) NULL AFTER snapshot_name',
+        'SELECT ''Column snapshot_table already exists — skipping'''
+    )
+    FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = @dbname
+      AND TABLE_NAME   = @tblname
+      AND COLUMN_NAME  = @colname
+);
+PREPARE stmt FROM @preparedStatement;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+-- =============================================================================
