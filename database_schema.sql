@@ -910,7 +910,7 @@ INSERT INTO email_templates (name, subject, body, status)
 VALUES (
     'login_otp',
     'Your login verification code',
-    'Hi {{first_name}},\n\nYour login verification code is:\n\n    {{otp_code}}\n\nThis code expires in 15 minutes. If you did not request this code, you can ignore this email.\n\nDo not share this code with anyone.',
+    'Hi {{first_name}},\n\nYour login verification code is:\n\n{{otp_code}}\n\nThis code expires in 15 minutes.\n\nIf you did not request this, please contact your administrator.',
     'active'
 )
 ON DUPLICATE KEY UPDATE subject = VALUES(subject), body = VALUES(body);
