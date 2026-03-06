@@ -70,7 +70,7 @@ completed: 2026-03-06
 ## Task Commits
 
 1. **Task 1: Verify and fix admin-pages.php and admin-emails.php** - `765ba7d` (feat)
-2. **Task 2: Human verification — EXT-02/EXT-03/EXT-01 browser check** - PENDING checkpoint
+2. **Task 2: Fix login_otp template body — missing {{first_name}} token** - `69dda4d` (fix)
 
 ## Files Created/Modified
 
@@ -84,7 +84,14 @@ completed: 2026-03-06
 
 ## Deviations from Plan
 
-None - both files were already correct per all inspection criteria. Verification comment added to each file as specified.
+### Auto-fixed Issues
+
+**1. [User-reported Bug] login_otp email template body missing {{first_name}} token**
+- **Found during:** Task 2 human verification checkpoint
+- **Issue:** Human verification revealed the login_otp email template body did not include the `{{first_name}}` token as required. The original seed INSERT had a different body text that lacked proper token placement.
+- **Fix:** Updated live DB body to: "Hi {{first_name}},\n\nYour login verification code is:\n\n{{otp_code}}\n\nThis code expires in 15 minutes.\n\nIf you did not request this, please contact your administrator." — also updated the database_schema.sql seed INSERT to match (ON DUPLICATE KEY UPDATE ensures consistency on fresh installs)
+- **Files modified:** `database_schema.sql`
+- **Commit:** `69dda4d`
 
 ## Issues Encountered
 

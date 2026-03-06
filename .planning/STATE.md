@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 04-05-PLAN.md Task 1; waiting at human-verify checkpoint Task 2
+stopped_at: Completed 04-05-PLAN.md — all tasks done; human verification issue resolved
 last_updated: "2026-03-06T21:43:32.965Z"
 last_activity: "2026-03-06 — Plan 04-01 complete: Phase 4 extensibility test stubs (EXT-01, SEC-05, EXT-02, EXT-03), 14 tests all passing. test_all.php updated."
 progress:
@@ -131,6 +131,7 @@ Recent decisions affecting current work:
 - [Phase 04-extensibility]: login-otp page registered via INSERT ON DUPLICATE KEY UPDATE in database_schema.sql for reproducibility on fresh install
 - [Phase 04-extensibility]: require_2fa checkbox uses isset() not ?? 0 — unchecked checkboxes absent from POST data, isset() correctly saves 0 on uncheck
 - [Phase 04-05]: Both admin-pages.php and admin-emails.php were already correct — content textarea uses htmlspecialchars for display only; processTokens str_replace outputs raw HTML; no double-escaping in serving path
+- [Phase 04-05]: login_otp email template body fixed (user caught during human verify checkpoint) — {{first_name}} and {{otp_code}} tokens now explicit; fix applied to live DB and database_schema.sql seed; commit 69dda4d
 
 ### Pending Todos
 
