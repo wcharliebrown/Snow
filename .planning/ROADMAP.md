@@ -87,7 +87,14 @@ Plans:
   2. After entering correct credentials, a user receives a 6-digit code by email and cannot complete login until the correct code is entered
   3. Admin can create a custom web page with a URL path and PHP/HTML content that is served by the framework
   4. Admin can create an email template with named variables; sending code can call the template by name with variable values to produce a rendered outbound email
-**Plans**: TBD
+**Plans**: 5 plans
+
+Plans:
+- [ ] 04-01-PLAN.md — Test scaffold: test_extensibility.php stubs for EXT-01, SEC-05, EXT-02, EXT-03
+- [ ] 04-02-PLAN.md — DB migration: pre_edit_php_filename, post_edit_php_filename, require_2fa, login_otp table, login_otp email template seed
+- [ ] 04-03-PLAN.md — EXT-01: Hook execution in admin-custom-table.php + hook filename fields in admin-tables.php
+- [ ] 04-04-PLAN.md — SEC-05: 2FA login fork in login.php + login-otp.php OTP entry page + require_2fa checkbox in admin-users.php
+- [ ] 04-05-PLAN.md — EXT-02/EXT-03: Verify admin-pages.php and admin-emails.php; human verification checkpoint
 
 ### Phase 5: User Experience
 **Goal**: Admins can search, sort, and filter records on any managed table list view; any row can be scheduled for automatic activation, deactivation, or deletion on a future date.
@@ -110,7 +117,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 1. Security Foundations | 4/6 | In Progress|  |
 | 2. Access Control | 6/6 | Complete   | 2026-03-01 |
 | 3. Data Integrity | 6/6 | Complete   | 2026-03-06 |
-| 4. Extensibility | 0/TBD | Not started | - |
+| 4. Extensibility | 0/5 | Not started | - |
 | 5. User Experience | 0/TBD | Not started | - |
 
 ---
