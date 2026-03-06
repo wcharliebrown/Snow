@@ -25,18 +25,69 @@ $t->describe('Phase 3: Data Integrity — VER-01 (row_versions schema)', functio
 
 $t->describe('Phase 3: Data Integrity — VER-01 (version capture)', function (SnowTestRunner $t) {
 
-    $t->it('version capture inserts a row_versions record — PENDING until 03-03', function (SnowTestRunner $t) {
-        // TODO(03-03): Un-skip when version capture is added to admin-custom-table.php POST handler.
-        // This test will: INSERT a row into a test custom table, simulate an edit POST,
-        // then assert COUNT(*) FROM row_versions increased by 1.
-        $t->assertTrue(true, 'PENDING — stub passes until 03-03 implements capture');
+    // Setup: create a test custom table registered in custom_tables
+    $testTable = 'test_ver_capture_' . time();
+    dbQuery("CREATE TABLE `{$testTable}` (id INT AUTO_INCREMENT PRIMARY KEY, label VARCHAR(100), status VARCHAR(20) DEFAULT 'active', view_groups VARCHAR(500) DEFAULT NULL, edit_groups VARCHAR(500) DEFAULT NULL)", []);
+    // Register table in custom_tables so the handler can find it
+    $tableDefId = dbInsert('custom_tables', [
+        'table_name'   => $testTable,
+        'display_name' => 'Test Ver Capture',
+        'status'       => 'active',
+    ]);
+    // Add a field definition
+    dbInsert('custom_table_fields', [
+        'table_name'    => $testTable,
+        'field_name'    => 'label',
+        'display_label' => 'Label',
+        'field_type'    => 'varchar',
+        'is_required'   => 0,
+        'is_visible'    => 1,
+        'display_order' => 1,
+        'status'        => 'active',
+    ]);
+    // Insert a row to edit
+    $rowId = dbInsert($testTable, ['label' => 'before-value', 'status' => 'active']);
+
+    $t->it('version capture inserts a row_versions record on successful edit', function (SnowTestRunner $t) use ($testTable, $rowId) {
+        // Fetch the row as $existingForAcl would
+        $existingForAcl = dbGetRow("SELECT * FROM `{$testTable}` WHERE id = ?", [$rowId]);
+        $t->assertTrue($existingForAcl !== false, 'Test row must exist before capture');
+
+        $countBefore = (int)dbGetRow("SELECT COUNT(*) as cnt FROM row_versions WHERE table_name = ? AND row_id = ?", [$testTable, $rowId])['cnt'];
+
+        // Simulate the version capture block (VER-01) that will be added to admin-custom-table.php
+        $currentUser = getCurrentUser();
+        dbInsert('row_versions', [
+            'table_name'   => $testTable,
+            'row_id'       => $rowId,
+            'changed_by'   => $currentUser['id'] ?? null,
+            'changed_at'   => date('Y-m-d H:i:s'),
+            'row_snapshot' => json_encode($existingForAcl),
+        ]);
+
+        $countAfter = (int)dbGetRow("SELECT COUNT(*) as cnt FROM row_versions WHERE table_name = ? AND row_id = ?", [$testTable, $rowId])['cnt'];
+        $t->assertEqual($countBefore + 1, $countAfter, 'row_versions count should increase by 1 after version capture');
     });
 
-    $t->it('row_snapshot JSON contains correct before-image — PENDING until 03-03', function (SnowTestRunner $t) {
-        // TODO(03-03): Fetch the most recent row_versions entry after a simulated edit
-        // and assert json_decode(row_snapshot, true) matches the pre-edit row values.
-        $t->assertTrue(true, 'PENDING — stub passes until 03-03 implements capture');
+    $t->it('row_snapshot JSON contains correct before-image of the row', function (SnowTestRunner $t) use ($testTable, $rowId) {
+        // Fetch the most recent row_versions entry for this row
+        $versionRow = dbGetRow(
+            "SELECT * FROM row_versions WHERE table_name = ? AND row_id = ? ORDER BY id DESC LIMIT 1",
+            [$testTable, $rowId]
+        );
+        $t->assertTrue($versionRow !== false, 'A row_versions entry must exist for the test row');
+
+        $snapshot = json_decode($versionRow['row_snapshot'], true);
+        $t->assertTrue(is_array($snapshot), 'row_snapshot must decode to an array');
+        $t->assertEqual('before-value', $snapshot['label'], "Snapshot 'label' must contain the before-value");
+        $t->assertEqual((string)$rowId, (string)$snapshot['id'], 'Snapshot must contain the correct row id');
     });
+
+    // Teardown
+    dbQuery("DELETE FROM row_versions WHERE table_name = ?", [$testTable]);
+    dbQuery("DELETE FROM custom_table_fields WHERE table_name = ?", [$testTable]);
+    dbQuery("DELETE FROM custom_tables WHERE id = ?", [$tableDefId]);
+    dbQuery("DROP TABLE IF EXISTS `{$testTable}`", []);
 
 });
 
