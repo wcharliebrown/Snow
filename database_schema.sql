@@ -915,4 +915,9 @@ VALUES (
 )
 ON DUPLICATE KEY UPDATE subject = VALUES(subject), body = VALUES(body);
 
+-- SEC-05: Register login-otp page for OTP entry
+INSERT INTO pages (title, path, custom_script, require_auth, status)
+VALUES ('Login Verification', 'login-otp', 'login-otp.php', 0, 'active')
+ON DUPLICATE KEY UPDATE custom_script = VALUES(custom_script), title = VALUES(title);
+
 -- =============================================================================
