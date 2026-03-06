@@ -169,7 +169,7 @@ if ($action === 'add') {
             </div>
             <div class="col-12">
                 <label class="form-label">Content</label>
-                <textarea name="content" class="form-control" rows="8"><?= htmlspecialchars($_POST['content'] ?? '') ?></textarea>
+                <textarea name="content" class="form-control" rows="8"><?= str_replace(['{', '}'], ['&#123;', '&#125;'], htmlspecialchars($_POST['content'] ?? '')) ?></textarea>
             </div>
             <div class="col-md-6">
                 <label class="form-label">Meta Description</label>
@@ -261,7 +261,7 @@ if ($action === 'add') {
                 </div>
                 <div class="col-12">
                     <label class="form-label">Content</label>
-                    <textarea name="content" class="form-control" rows="8"><?= htmlspecialchars($_POST['content'] ?? $editPage['content'] ?? '') ?></textarea>
+                    <textarea name="content" class="form-control" rows="8"><?= str_replace(['{', '}'], ['&#123;', '&#125;'], htmlspecialchars($_POST['content'] ?? $editPage['content'] ?? '')) ?></textarea>
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">Meta Description</label>

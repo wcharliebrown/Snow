@@ -195,7 +195,7 @@ if ($action === 'add') {
             ['title' => 'Email Templates', 'url' => '/admin/emails'],
             ['title' => 'Edit Template',   'url' => '', 'current' => true],
         ];
-        $v = fn($k) => htmlspecialchars($_POST[$k] ?? $editTpl[$k] ?? '');
+        $v = fn($k) => str_replace(['{', '}'], ['&#123;', '&#125;'], htmlspecialchars($_POST[$k] ?? $editTpl[$k] ?? ''));
         ?>
         <?php if ($error): ?><div class="alert alert-danger"><?= htmlspecialchars($error) ?></div><?php endif; ?>
         <a href="/admin/emails" class="btn btn-secondary btn-sm mb-3">&larr; Back to Email Templates</a>
