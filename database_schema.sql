@@ -840,3 +840,79 @@ PREPARE stmt FROM @preparedStatement;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 -- =============================================================================
+-- =============================================================================
+-- Phase 4: Extensibility — migration (2026-03-06)
+-- =============================================================================
+
+-- EXT-01: Add pre_edit_php_filename to custom_tables (hook: fires before row edit is saved)
+SET @preparedStatement = (
+    SELECT IF(
+        COUNT(*) = 0,
+        'ALTER TABLE custom_tables ADD COLUMN pre_edit_php_filename VARCHAR(255) NULL AFTER description',
+        'SELECT 1'
+    )
+    FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME   = 'custom_tables'
+      AND COLUMN_NAME  = 'pre_edit_php_filename'
+);
+PREPARE stmt FROM @preparedStatement;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+-- EXT-01: Add post_edit_php_filename to custom_tables (hook: fires after row edit is saved)
+SET @preparedStatement = (
+    SELECT IF(
+        COUNT(*) = 0,
+        'ALTER TABLE custom_tables ADD COLUMN post_edit_php_filename VARCHAR(255) NULL AFTER pre_edit_php_filename',
+        'SELECT 1'
+    )
+    FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME   = 'custom_tables'
+      AND COLUMN_NAME  = 'post_edit_php_filename'
+);
+PREPARE stmt FROM @preparedStatement;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+-- SEC-05: Add require_2fa to users (flag: 1 = user must complete OTP challenge at login)
+SET @preparedStatement = (
+    SELECT IF(
+        COUNT(*) = 0,
+        'ALTER TABLE users ADD COLUMN require_2fa TINYINT(1) NOT NULL DEFAULT 0 AFTER status',
+        'SELECT 1'
+    )
+    FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME   = 'users'
+      AND COLUMN_NAME  = 'require_2fa'
+);
+PREPARE stmt FROM @preparedStatement;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+-- SEC-05: OTP challenge table — holds pending login verification codes
+CREATE TABLE IF NOT EXISTS login_otp (
+    id         INT          NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    user_id    INT          NOT NULL,
+    code       VARCHAR(6)   NOT NULL,
+    expires_at DATETIME     NOT NULL,
+    attempts   TINYINT      NOT NULL DEFAULT 0,
+    created_at DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_login_otp_user    (user_id),
+    INDEX idx_login_otp_expires (expires_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- SEC-05: Seed login_otp email template
+INSERT INTO email_templates (name, subject, body, status)
+VALUES (
+    'login_otp',
+    'Your login verification code',
+    'Hi {{first_name}},\n\nYour login verification code is:\n\n    {{otp_code}}\n\nThis code expires in 15 minutes. If you did not request this code, you can ignore this email.\n\nDo not share this code with anyone.',
+    'active'
+)
+ON DUPLICATE KEY UPDATE subject = VALUES(subject), body = VALUES(body);
+
+-- =============================================================================
