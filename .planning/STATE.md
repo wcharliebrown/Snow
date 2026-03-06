@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 4 context gathered
-last_updated: "2026-03-06T18:07:22.298Z"
+stopped_at: Completed 04-02-PLAN.md
+last_updated: "2026-03-06T21:31:30.991Z"
 last_activity: "2026-03-06 — Plan 03-06 complete: Snapshot restore with atomic RENAME TABLE, pre-restore auto-safety-snapshot, and schema-drift warning. VER-05 complete. Phase 3 all 6 plans done."
 progress:
   total_phases: 5
   completed_phases: 3
-  total_plans: 18
-  completed_plans: 18
+  total_plans: 23
+  completed_plans: 19
   percent: 60
 ---
 
@@ -59,6 +59,7 @@ Progress: [██████░░░░] 60% (Phase 01 complete, Phase 02 comp
 | Phase 03-data-integrity P03 | 10 | 1 tasks | 1 files |
 | Phase 03-data-integrity P04 | 20 | 3 tasks | 1 files |
 | Phase 03-data-integrity P05 | 30 | 2 tasks | 1 files |
+| Phase 04-extensibility P02 | 2 | 1 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -115,6 +116,9 @@ Recent decisions affecting current work:
 - [Phase 03-06]: RENAME TABLE is DDL in MySQL and auto-commits — wrapping in dbBeginTransaction/dbCommit/dbRollback causes "no active transaction" error on rollback; removed transaction wrapper and rely on MySQL's native two-pair atomicity guarantee
 - [Phase 03-06]: Pre-restore auto-snapshot (CREATE TABLE AS SELECT) created before the rename gives admin a named recovery point; _prerestore_ artifact recorded in snapshots metadata as a second recovery path
 - [Phase 03-06]: Schema-drift check (SHOW COLUMNS comparison) presented on restore confirmation page as a warning banner — admin can proceed but is clearly informed of column mismatches
+- [Phase 04-extensibility]: Phase 4 migration extracted by line number (not sed pattern) to avoid ambiguity at Phase 3/4 adjacent delimiter boundary
+- [Phase 04-extensibility]: login_otp FK to users ON DELETE CASCADE — orphaned OTP rows auto-cleaned when user deleted
+- [Phase 04-extensibility]: OTP test stubs fixed: user_id=0 violated FK constraint; now resolves real user_id via SELECT FROM users LIMIT 1
 
 ### Pending Todos
 
@@ -128,6 +132,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-06T18:07:22.295Z
-Stopped at: Phase 4 context gathered
-Resume file: .planning/phases/04-extensibility/04-CONTEXT.md
+Last session: 2026-03-06T21:31:30.988Z
+Stopped at: Completed 04-02-PLAN.md
+Resume file: None

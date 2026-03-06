@@ -13,7 +13,7 @@ Requirements for initial release. Each maps to a roadmap phase.
 - [x] **SEC-02**: Sessions are stored in MySQL (DB-backed SessionHandlerInterface with SELECT FOR UPDATE locking)
 - [x] **SEC-03**: Admin can configure password policy (minimum length, maximum age, reuse control)
 - [x] **SEC-04**: System logs logins, errors, and outbound emails to database (multi-level, structured)
-- [ ] **SEC-05**: User can complete login using a short-term 6-digit code sent to their email address (2FA)
+- [x] **SEC-05**: User can complete login using a short-term 6-digit code sent to their email address (2FA)
 
 ### Access Control
 
@@ -38,7 +38,7 @@ Requirements for initial release. Each maps to a roadmap phase.
 
 ### Extensibility
 
-- [ ] **EXT-01**: Admin can register PHP hook files that execute automatically on row create/modify for any table
+- [x] **EXT-01**: Admin can register PHP hook files that execute automatically on row create/modify for any table
 - [ ] **EXT-02**: Admin can create custom web pages served by the framework
 - [ ] **EXT-03**: Admin can create email templates for customized outbound messages
 - [ ] **EXT-04**: Admin can schedule row activation, deactivation, or deletion to occur on a specific future date
@@ -80,7 +80,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SEC-02 | Phase 1 | Complete |
 | SEC-03 | Phase 1 | Complete |
 | SEC-04 | Phase 1 | Complete |
-| SEC-05 | Phase 4 | Pending |
+| SEC-05 | Phase 4 | Complete |
 | ACL-01 | Phase 2 | Complete |
 | ACL-02 | Phase 2 | Complete |
 | ACL-03 | Phase 2 | Complete |
@@ -93,7 +93,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | VER-03 | Phase 3 | Complete |
 | VER-04 | Phase 3 | Complete |
 | VER-05 | Phase 3 | Complete |
-| EXT-01 | Phase 4 | Pending |
+| EXT-01 | Phase 4 | Complete |
 | EXT-02 | Phase 4 | Pending |
 | EXT-03 | Phase 4 | Pending |
 | EXT-04 | Phase 5 | Pending |
