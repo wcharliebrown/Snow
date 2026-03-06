@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 04-03-PLAN.md
-last_updated: "2026-03-06T21:37:17.737Z"
+stopped_at: Completed 04-04-PLAN.md
+last_updated: "2026-03-06T21:39:59.758Z"
 last_activity: "2026-03-06 — Plan 04-01 complete: Phase 4 extensibility test stubs (EXT-01, SEC-05, EXT-02, EXT-03), 14 tests all passing. test_all.php updated."
 progress:
   total_phases: 5
   completed_phases: 3
   total_plans: 23
-  completed_plans: 21
+  completed_plans: 22
   percent: 87
 ---
 
@@ -62,6 +62,7 @@ Progress: [█████████░] 87% (Phase 01 complete, Phase 02 comp
 | Phase 04-extensibility P02 | 2 | 1 tasks | 2 files |
 | Phase 04-extensibility P01 | 4 | 2 tasks | 2 files |
 | Phase 04-extensibility P03 | 1 | 2 tasks | 2 files |
+| Phase 04-extensibility P04 | 4 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -125,6 +126,9 @@ Recent decisions affecting current work:
 - [Phase 04-01]: test_extensibility.php supports standalone run via isset($t) guard enabling both direct execution and include from test_all.php
 - [Phase 04-03]: pre_edit hook placed after $record loaded before HTML — hook has full context; post_edit hook in both add and edit branches for consistent create/update extension
 - [Phase 04-03]: Hook errors silently logged via logError() — redirect proceeds regardless; empty hook filename stored as NULL via trim ?: null
+- [Phase 04-extensibility]: 2FA fork in login.php (not auth.php) keeps loginUser() reusable; explicit unset(user_id) in 2FA path is critical security invariant
+- [Phase 04-extensibility]: login-otp page registered via INSERT ON DUPLICATE KEY UPDATE in database_schema.sql for reproducibility on fresh install
+- [Phase 04-extensibility]: require_2fa checkbox uses isset() not ?? 0 — unchecked checkboxes absent from POST data, isset() correctly saves 0 on uncheck
 
 ### Pending Todos
 
@@ -138,6 +142,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-06T21:37:17.734Z
-Stopped at: Completed 04-03-PLAN.md
+Last session: 2026-03-06T21:39:59.754Z
+Stopped at: Completed 04-04-PLAN.md
 Resume file: None
