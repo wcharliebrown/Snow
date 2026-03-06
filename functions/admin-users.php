@@ -76,10 +76,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $error = 'That email is already used by another user.';
             } else {
                 $fields = [
-                    'first_name' => $firstName,
-                    'last_name'  => $lastName,
-                    'email'      => $email,
-                    'status'     => $status,
+                    'first_name'  => $firstName,
+                    'last_name'   => $lastName,
+                    'email'       => $email,
+                    'status'      => $status,
+                    'require_2fa' => isset($_POST['require_2fa']) ? 1 : 0,
                 ];
                 if ($newPass !== '') {
                     $strengthErrors = validatePasswordStrength($newPass);
@@ -228,6 +229,13 @@ if ($action === 'add') {
                 <div class="col-md-6">
                     <label class="form-label">New Password <small class="text-muted">(leave blank to keep current)</small></label>
                     <input type="password" name="password" class="form-control" minlength="<?= (int)getPasswordPolicy()['min_length'] ?>">
+                </div>
+                <div class="col-12">
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" name="require_2fa" id="require_2fa" value="1"
+                            <?= (($_POST['require_2fa'] ?? $editUser['require_2fa'] ?? 0) == 1) ? 'checked' : '' ?>>
+                        <label class="form-check-label" for="require_2fa">Require email OTP on login (2FA)</label>
+                    </div>
                 </div>
             </div>
 
