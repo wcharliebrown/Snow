@@ -404,7 +404,87 @@ if ($action === 'add') {
         }
         ?>
         <?php if ($error): ?><div class="alert alert-danger"><?= $error ?></div><?php endif; ?>
+        <?php if ($message): ?><div class="alert alert-success"><?= htmlspecialchars($message) ?></div><?php endif; ?>
         <a href="/<?= htmlspecialchars($page['path']) ?>" class="btn btn-secondary btn-sm mb-3">&larr; Back to <?= htmlspecialchars($displayName) ?></a>
+
+        <?php if (!empty($versionDiff)): ?>
+        <!-- Version diff panel (shown when version_diff GET param is set) -->
+        <div class="card mb-3 border-warning">
+            <div class="card-header py-2 bg-warning-subtle"><strong>Version Diff</strong> — selected version vs. current</div>
+            <div class="card-body p-2">
+                <table class="table table-sm table-bordered small mb-0">
+                    <thead class="table-light"><tr><th>Field</th><th>Selected Version</th><th>Current Value</th></tr></thead>
+                    <tbody>
+                    <?php foreach ($versionDiff as $col => $oldVal):
+                        $curVal = $currentRecord[$col] ?? '';
+                        $isDifferent = in_array($col, $versionDiffFields);
+                    ?>
+                    <tr<?= $isDifferent ? ' class="table-warning"' : '' ?>>
+                        <td class="fw-semibold"><?= htmlspecialchars($col) ?></td>
+                        <td><?= htmlspecialchars((string)$oldVal) ?></td>
+                        <td><?= htmlspecialchars((string)$curVal) ?></td>
+                    </tr>
+                    <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <?php endif; ?>
+
+        <?php if (!empty($versions)): ?>
+        <!-- Version history selectors (only shown when history exists) -->
+        <div class="card mb-3">
+            <div class="card-header py-2"><strong>Version History</strong>
+                <?php if ($totalVersionCount > 20): ?>
+                <span class="text-muted small ms-2">(showing 20 most recent of <?= $totalVersionCount ?>)</span>
+                <?php endif; ?>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <!-- Diff selector -->
+                    <div class="col-md-6">
+                        <form method="get" action="/<?= htmlspecialchars($page['path']) ?>">
+                            <input type="hidden" name="action" value="edit">
+                            <input type="hidden" name="id" value="<?= $recordId ?>">
+                            <label class="form-label form-label-sm">Compare version:</label>
+                            <div class="input-group input-group-sm">
+                                <select name="version_diff" class="form-select form-select-sm">
+                                    <option value="">— select version to diff —</option>
+                                    <?php foreach ($versions as $v): ?>
+                                    <option value="<?= (int)$v['id'] ?>"
+                                        <?= (isset($_GET['version_diff']) && (int)$_GET['version_diff'] === (int)$v['id']) ? 'selected' : '' ?>>
+                                        <?= htmlspecialchars($v['changed_at']) ?>
+                                    </option>
+                                    <?php endforeach; ?>
+                                </select>
+                                <button type="submit" class="btn btn-outline-secondary btn-sm">Show Diff</button>
+                            </div>
+                        </form>
+                    </div>
+                    <!-- Revert selector -->
+                    <div class="col-md-6">
+                        <form method="post" action="/<?= htmlspecialchars($page['path']) ?>"
+                              onsubmit="return confirm('Revert row to selected version? Current state will be saved as a new version entry.')">
+                            <?= csrfField() ?>
+                            <input type="hidden" name="action" value="revert">
+                            <input type="hidden" name="id" value="<?= $recordId ?>">
+                            <label class="form-label form-label-sm">Revert to version:</label>
+                            <div class="input-group input-group-sm">
+                                <select name="version_id" class="form-select form-select-sm" required>
+                                    <option value="">— select version to restore —</option>
+                                    <?php foreach ($versions as $v): ?>
+                                    <option value="<?= (int)$v['id'] ?>"><?= htmlspecialchars($v['changed_at']) ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                                <button type="submit" class="btn btn-outline-warning btn-sm">Revert</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <?php endif; ?>
+
         <form method="post" action="/<?= htmlspecialchars($page['path']) ?>?action=edit&id=<?= $recordId ?>">
             <?= csrfField() ?>
             <input type="hidden" name="action" value="edit">
