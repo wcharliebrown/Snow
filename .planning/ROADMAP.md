@@ -14,7 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [ ] **Phase 1: Security Foundations** - CSRF protection, DB-backed sessions, password policy, and structured activity logging
 - [x] **Phase 2: Access Control** - Row-level view and edit ACL on all managed tables, standard columns enforced at provisioning (completed 2026-03-01)
-- [ ] **Phase 3: Data Integrity** - Row-level version history with rollback, table snapshots with diff and restore
+- [x] **Phase 3: Data Integrity** - Row-level version history with rollback, table snapshots with diff and restore (completed 2026-03-06)
 - [ ] **Phase 4: Extensibility** - File-based hook system, 2FA (email OTP), custom web pages, email templates
 - [ ] **Phase 5: User Experience** - Search, sort, filter on all list views; staged row activation and deactivation
 
@@ -109,7 +109,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 |-------|----------------|--------|-----------|
 | 1. Security Foundations | 4/6 | In Progress|  |
 | 2. Access Control | 6/6 | Complete   | 2026-03-01 |
-| 3. Data Integrity | 4/6 | In Progress|  |
+| 3. Data Integrity | 6/6 | Complete   | 2026-03-06 |
 | 4. Extensibility | 0/TBD | Not started | - |
 | 5. User Experience | 0/TBD | Not started | - |
 

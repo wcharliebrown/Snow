@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 03-04-PLAN.md — snapshot create + diff view verified and approved
-last_updated: "2026-03-06T14:44:13.218Z"
+stopped_at: Completed 03-05-PLAN.md — version diff and revert verified and approved
+last_updated: "2026-03-06T15:09:51.625Z"
 last_activity: "2026-03-05 — Plan 03-01 complete: Phase 3 test scaffold created; VER-04 diff algorithm tests passing; VER-01 schema stubs failing as expected; all Phase 3 plans have runnable automated verify."
 progress:
   total_phases: 5
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 18
-  completed_plans: 16
+  completed_plans: 18
   percent: 40
 ---
 
@@ -58,6 +58,7 @@ Progress: [████░░░░░░] 40% (Phase 01 complete, Phase 02 comp
 | Phase 03-data-integrity P03 | 2 | 1 tasks | 2 files |
 | Phase 03-data-integrity P03 | 10 | 1 tasks | 1 files |
 | Phase 03-data-integrity P04 | 20 | 3 tasks | 1 files |
+| Phase 03-data-integrity P05 | 30 | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -109,6 +110,8 @@ Recent decisions affecting current work:
 - [Phase 03-data-integrity]: Diff row-size guard at 10,000 rows per table — refusal with error banner rather than partial diff (Pitfall 7)
 - [Phase 03-data-integrity]: VER-01 capture placed inside if(!hasError) using $existingForAcl — zero extra SELECT, captures before-image immediately before dbUpdate()
 - [Phase 03-data-integrity]: renderPage() called with path string not array — framework expects a file path string as first arg; passing $page array directly causes HTTP 500 (fixed during verification of 03-04 diff view)
+- [Phase 03-data-integrity]: VER-02 revert strips id/created_at/modified_at before dbUpdate; view_groups/edit_groups ARE restored to historical ACL state
+- [Phase 03-data-integrity]: SHOW COLUMNS + array_intersect_key filters restored snapshot to live schema — guards against schema drift after versions recorded
 
 ### Pending Todos
 
@@ -122,6 +125,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-06T14:44:13.215Z
-Stopped at: Completed 03-04-PLAN.md — snapshot create + diff view verified and approved
+Last session: 2026-03-06T15:09:51.621Z
+Stopped at: Completed 03-05-PLAN.md — version diff and revert verified and approved
 Resume file: None

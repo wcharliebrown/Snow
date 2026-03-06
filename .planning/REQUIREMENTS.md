@@ -31,10 +31,10 @@ Requirements for initial release. Each maps to a roadmap phase.
 ### Versioning
 
 - [x] **VER-01**: System records which user modified each row and what changed (JSON snapshot before each edit)
-- [ ] **VER-02**: Admin can roll back any row to any prior version
+- [x] **VER-02**: Admin can roll back any row to any prior version
 - [x] **VER-03**: Admin can create a snapshot (full data copy) of any table
-- [ ] **VER-04**: Admin can view a diff showing row-level changes to a table since its last snapshot
-- [ ] **VER-05**: Admin can restore a table to its state at the time of any snapshot
+- [x] **VER-04**: Admin can view a diff showing row-level changes to a table since its last snapshot
+- [x] **VER-05**: Admin can restore a table to its state at the time of any snapshot
 
 ### Extensibility
 
@@ -89,10 +89,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DATA-03 | Phase 5 | Pending |
 | DATA-04 | Phase 5 | Pending |
 | VER-01 | Phase 3 | Complete |
-| VER-02 | Phase 3 | Pending |
+| VER-02 | Phase 3 | Complete |
 | VER-03 | Phase 3 | Complete |
-| VER-04 | Phase 3 | Pending |
-| VER-05 | Phase 3 | Pending |
+| VER-04 | Phase 3 | Complete |
+| VER-05 | Phase 3 | Complete |
 | EXT-01 | Phase 4 | Pending |
 | EXT-02 | Phase 4 | Pending |
 | EXT-03 | Phase 4 | Pending |
