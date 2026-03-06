@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 03-05-PLAN.md — version diff and revert verified and approved
-last_updated: "2026-03-06T15:09:51.625Z"
-last_activity: "2026-03-05 — Plan 03-01 complete: Phase 3 test scaffold created; VER-04 diff algorithm tests passing; VER-01 schema stubs failing as expected; all Phase 3 plans have runnable automated verify."
+stopped_at: Completed 03-06-PLAN.md — snapshot restore verified and approved; Phase 3 complete
+last_updated: "2026-03-06T00:00:00.000Z"
+last_activity: "2026-03-06 — Plan 03-06 complete: Snapshot restore with atomic RENAME TABLE, pre-restore auto-safety-snapshot, and schema-drift warning. VER-05 complete. Phase 3 all 6 plans done."
 progress:
   total_phases: 5
   completed_phases: 3
   total_plans: 18
   completed_plans: 18
-  percent: 40
+  percent: 60
 ---
 
 # Project State
@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-02-27)
 
 ## Current Position
 
-Phase: 3 of 5 (Data Integrity) — IN PROGRESS
-Plan: 1 of 6 in current phase (03-01 complete)
-Status: In Progress
-Last activity: 2026-03-05 — Plan 03-01 complete: Phase 3 test scaffold created; VER-04 diff algorithm tests passing; VER-01 schema stubs failing as expected; all Phase 3 plans have runnable automated verify.
+Phase: 3 of 5 (Data Integrity) — COMPLETE
+Plan: 6 of 6 in current phase (03-06 complete — all Phase 3 plans done)
+Status: In Progress (Phase 4 not yet started)
+Last activity: 2026-03-06 — Plan 03-06 complete: Snapshot restore with atomic RENAME TABLE, pre-restore auto-safety-snapshot, and schema-drift warning. VER-05 complete. Phase 3 all 6 plans done.
 
-Progress: [████░░░░░░] 40% (Phase 01 complete, Phase 02 complete, Phase 03 plan 1/6 done)
+Progress: [██████░░░░] 60% (Phase 01 complete, Phase 02 complete, Phase 03 complete — 6/6 plans)
 
 ## Performance Metrics
 
@@ -112,6 +112,9 @@ Recent decisions affecting current work:
 - [Phase 03-data-integrity]: renderPage() called with path string not array — framework expects a file path string as first arg; passing $page array directly causes HTTP 500 (fixed during verification of 03-04 diff view)
 - [Phase 03-data-integrity]: VER-02 revert strips id/created_at/modified_at before dbUpdate; view_groups/edit_groups ARE restored to historical ACL state
 - [Phase 03-data-integrity]: SHOW COLUMNS + array_intersect_key filters restored snapshot to live schema — guards against schema drift after versions recorded
+- [Phase 03-06]: RENAME TABLE is DDL in MySQL and auto-commits — wrapping in dbBeginTransaction/dbCommit/dbRollback causes "no active transaction" error on rollback; removed transaction wrapper and rely on MySQL's native two-pair atomicity guarantee
+- [Phase 03-06]: Pre-restore auto-snapshot (CREATE TABLE AS SELECT) created before the rename gives admin a named recovery point; _prerestore_ artifact recorded in snapshots metadata as a second recovery path
+- [Phase 03-06]: Schema-drift check (SHOW COLUMNS comparison) presented on restore confirmation page as a warning banner — admin can proceed but is clearly informed of column mismatches
 
 ### Pending Todos
 
@@ -125,6 +128,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-06T15:09:51.621Z
-Stopped at: Completed 03-05-PLAN.md — version diff and revert verified and approved
+Last session: 2026-03-06T00:00:00.000Z
+Stopped at: Completed 03-06-PLAN.md — snapshot restore verified and approved; Phase 3 complete
 Resume file: None
