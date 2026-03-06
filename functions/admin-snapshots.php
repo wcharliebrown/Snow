@@ -179,8 +179,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'diff' && isset($_GET['id'])) 
                 </div>
                 <?php
                 $page['content'] = ob_get_clean();
-                renderPage($page);
-                exit;
+                return;
             }
         }
     }
