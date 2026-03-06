@@ -817,4 +817,26 @@ SET @preparedStatement = (
 PREPARE stmt FROM @preparedStatement;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
+
+-- =============================================================================
+-- Phase 3 Plan 06 — snapshot restore (2026-03-06)
+-- =============================================================================
+-- VER-05: Expand snapshots.status enum to include 'restored'.
+-- Needed so the restore POST handler can mark a used snapshot without deleting it.
+-- Uses COLUMN_TYPE check in INFORMATION_SCHEMA to guard against re-running.
+SET @dbname = DATABASE();
+SET @preparedStatement = (
+    SELECT IF(
+        COLUMN_TYPE NOT LIKE '%restored%',
+        'ALTER TABLE snapshots MODIFY COLUMN status ENUM(''active'',''deleted'',''restored'') DEFAULT ''active''',
+        'SELECT ''snapshots.status already has restored value — skipping'''
+    )
+    FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = @dbname
+      AND TABLE_NAME   = 'snapshots'
+      AND COLUMN_NAME  = 'status'
+);
+PREPARE stmt FROM @preparedStatement;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 -- =============================================================================
