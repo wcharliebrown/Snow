@@ -96,15 +96,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 // Step 2: Atomic rename — live → temp, snapshot → live
                 // Single RENAME TABLE statement: both renames are atomic (MySQL guarantee)
-                // DDL is auto-committed in MySQL; dbBeginTransaction wraps for rollback on exception only
-                dbBeginTransaction();
+                // Note: RENAME TABLE is DDL and auto-commits in MySQL — no transaction wrapper
                 try {
                     dbQuery(
                         "RENAME TABLE `{$liveTable}` TO `{$tempTable}`,
                                       `{$snapshotTable}` TO `{$liveTable}`",
                         []
                     );
-                    dbCommit();
 
                     // Record the temp (pre-restore) table as a snapshot so admin can see and manage it
                     $tempRowCount = (int)(dbGetRow("SELECT COUNT(*) AS n FROM `{$tempTable}`", [])['n'] ?? 0);
@@ -127,7 +125,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     exit;
 
                 } catch (Exception $e) {
-                    dbRollback();
                     $error = 'Restore failed: ' . $e->getMessage() .
                              ' The auto-safety-snapshot was created but the rename did not complete.';
                 }
