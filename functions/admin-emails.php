@@ -2,6 +2,7 @@
 /**
  * Admin - Email Template Management
  */
+// EXT-02/EXT-03 verified correct — Phase 4 (2026-03-06)
 
 requirePermission('email_management');
 
