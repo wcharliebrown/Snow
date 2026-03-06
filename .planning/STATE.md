@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 03-02-PLAN.md
-last_updated: "2026-03-05T22:28:05.697Z"
+stopped_at: "Checkpoint: 03-03 Task 1 complete, awaiting human-verify of row_versions in live admin UI"
+last_updated: "2026-03-06T14:27:00.307Z"
 last_activity: "2026-03-05 — Plan 03-01 complete: Phase 3 test scaffold created; VER-04 diff algorithm tests passing; VER-01 schema stubs failing as expected; all Phase 3 plans have runnable automated verify."
 progress:
   total_phases: 5
   completed_phases: 2
   total_plans: 18
-  completed_plans: 14
+  completed_plans: 16
   percent: 40
 ---
 
@@ -54,6 +54,8 @@ Progress: [████░░░░░░] 40% (Phase 01 complete, Phase 02 comp
 | Phase 02-access-control P05 | 1 | 1 tasks | 1 files |
 | Phase 02-access-control P06 | 45 | 3 tasks | 3 files |
 | Phase 03-data-integrity P02 | 5 | 2 tasks | 1 files |
+| Phase 03-data-integrity P04 | 20 | 2 tasks | 2 files |
+| Phase 03-data-integrity P03 | 2 | 1 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -99,6 +101,10 @@ Recent decisions affecting current work:
 - [Phase 02-access-control]: When splitting a permission, always grant the new child to groups already holding the parent — prevents admin privilege regression
 - [Phase 03-data-integrity]: Phase 3 migration extracted via sed to avoid re-running Phase 1/2 INSERT blocks; ALTER TABLE uses INFORMATION_SCHEMA PREPARE/EXECUTE guard (MySQL 8.0 compatible, same pattern as 01-01)
 - [Phase 03-data-integrity]: Phase-delimited migration blocks pattern: each phase appends a labelled SQL block enabling targeted sed extraction for idempotent re-runs
+- [Phase 03-data-integrity]: VER-01 capture placed inside if(!hasError) using $existingForAcl — zero extra SELECT, captures before-image immediately before dbUpdate()
+- [Phase 03-data-integrity]: snapshot_table name generated as snapshot_{table}_{YYYYMMDDHHmmss}{rand(100,999)} — date suffix gives sortability, 3-digit random prevents collision within same second (Pitfall 1)
+- [Phase 03-data-integrity]: Table dropdown uses custom_tables registry not SHOW TABLES — prevents snapshot_ tables appearing as snapshotable targets (Pitfall 4)
+- [Phase 03-data-integrity]: Diff row-size guard at 10,000 rows per table — refusal with error banner rather than partial diff (Pitfall 7)
 
 ### Pending Todos
 
@@ -112,6 +118,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-05T22:27:56.510Z
-Stopped at: Completed 03-02-PLAN.md
+Last session: 2026-03-06T14:26:52.996Z
+Stopped at: Checkpoint: 03-03 Task 1 complete, awaiting human-verify of row_versions in live admin UI
 Resume file: None
