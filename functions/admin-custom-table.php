@@ -89,7 +89,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (isset($_POST['status'])) {
                 $rowData['status'] = in_array($_POST['status'], ['active', 'inactive']) ? $_POST['status'] : 'active';
             }
+            // $record is [] for new records
+            $record = [];
             dbInsert($tableName, $rowData);
+            // EXT-01: Execute post_edit hook if registered for this table
+            $postHook = $tableDef['post_edit_php_filename'] ?? null;
+            if ($postHook) {
+                $hookPath = SNOW_FUNCTIONS . '/' . $postHook;
+                if (file_exists($hookPath)) {
+                    try {
+                        // $record/$insertedId available in scope for hook context
+                        include $hookPath;
+                    } catch (Throwable $e) {
+                        logError("post_edit hook '{$postHook}' failed for table '{$tableName}': " . $e->getMessage());
+                    }
+                }
+            }
             header('Location: /' . $page['path'] . '?msg=created');
             exit;
         }
@@ -149,6 +164,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             // end VER-01
             dbUpdate($tableName, $rowData, 'id = ?', [$recordId]);
+            // EXT-01: Execute post_edit hook if registered for this table
+            $postHook = $tableDef['post_edit_php_filename'] ?? null;
+            if ($postHook) {
+                $hookPath = SNOW_FUNCTIONS . '/' . $postHook;
+                if (file_exists($hookPath)) {
+                    try {
+                        // $record/$insertedId available in scope for hook context
+                        include $hookPath;
+                    } catch (Throwable $e) {
+                        logError("post_edit hook '{$postHook}' failed for table '{$tableName}': " . $e->getMessage());
+                    }
+                }
+            }
             header('Location: /' . $page['path'] . '?msg=updated');
             exit;
         }
@@ -401,6 +429,20 @@ if ($action === 'add') {
                 explode(',', $currentRecord['view_groups'] ?? '')));
             $currentEditGroups = array_filter(array_map('intval',
                 explode(',', $currentRecord['edit_groups'] ?? '')));
+        }
+
+        // EXT-01: Execute pre_edit hook if registered for this table
+        $preHook = $tableDef['pre_edit_php_filename'] ?? null;
+        if ($preHook) {
+            $hookPath = SNOW_FUNCTIONS . '/' . $preHook;
+            if (file_exists($hookPath)) {
+                try {
+                    // $record is in scope: existing row data for edit, [] for add
+                    include $hookPath;
+                } catch (Throwable $e) {
+                    logError("pre_edit hook '{$preHook}' failed for table '{$tableName}': " . $e->getMessage());
+                }
+            }
         }
         ?>
         <?php if ($error): ?><div class="alert alert-danger"><?= $error ?></div><?php endif; ?>
