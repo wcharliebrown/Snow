@@ -185,10 +185,84 @@ if (isset($_GET['action']) && $_GET['action'] === 'diff' && isset($_GET['id'])) 
     }
 }
 
+// ── Restore confirmation view ─────────────────────────────────────────────────
+
+if (isset($_GET['action']) && $_GET['action'] === 'restore' && isset($_GET['id'])) {
+    $restoreSnapshotId = (int)$_GET['id'];
+    $restoreSnapshot   = dbGetRow("SELECT * FROM snapshots WHERE id = ? AND status = 'active'", [$restoreSnapshotId]);
+
+    if (!$restoreSnapshot) {
+        $error = 'Snapshot not found.';
+    } else {
+        $snapshotTable = $restoreSnapshot['snapshot_table'] ?? '';
+        $liveTable     = $restoreSnapshot['table_name'];
+
+        if (!$snapshotTable || !dbTableExists($snapshotTable)) {
+            $error = "Snapshot table " . htmlspecialchars($snapshotTable ?: '(unknown)') . " no longer exists.";
+        } else {
+            // Schema drift check: compare column sets
+            $snapCols = array_column(dbGetRows("SHOW COLUMNS FROM `{$snapshotTable}`", []), 'Field');
+            $liveCols = array_column(dbGetRows("SHOW COLUMNS FROM `{$liveTable}`", []), 'Field');
+            $onlyInSnap = array_diff($snapCols, $liveCols);
+            $onlyInLive = array_diff($liveCols, $snapCols);
+            $hasSchemaDrift = !empty($onlyInSnap) || !empty($onlyInLive);
+
+            $page['title'] = 'Confirm Restore — ' . htmlspecialchars($restoreSnapshot['snapshot_name']);
+            $page['breadcrumbs'][] = ['title' => 'Restore', 'url' => '', 'current' => true];
+
+            ob_start();
+            ?>
+            <h5>Restore Snapshot: <em><?= htmlspecialchars($restoreSnapshot['snapshot_name']) ?></em></h5>
+
+            <?php if ($hasSchemaDrift): ?>
+            <div class="alert alert-warning">
+                <strong>Column mismatch detected.</strong> The snapshot and live table have different columns.
+                <?php if (!empty($onlyInSnap)): ?>
+                <br>Columns only in snapshot (will be restored): <code><?= htmlspecialchars(implode(', ', $onlyInSnap)) ?></code>
+                <?php endif; ?>
+                <?php if (!empty($onlyInLive)): ?>
+                <br>Columns only in live table (will be lost after restore): <code><?= htmlspecialchars(implode(', ', $onlyInLive)) ?></code>
+                <?php endif; ?>
+                <br><strong>Verify the restored table is correct after restore completes.</strong>
+            </div>
+            <?php endif; ?>
+
+            <div class="card mb-3">
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-3">Table</dt><dd class="col-sm-9"><?= htmlspecialchars($liveTable) ?></dd>
+                        <dt class="col-sm-3">Snapshot Name</dt><dd class="col-sm-9"><?= htmlspecialchars($restoreSnapshot['snapshot_name']) ?></dd>
+                        <dt class="col-sm-3">Snapshot Date</dt><dd class="col-sm-9"><?= htmlspecialchars($restoreSnapshot['snapshot_date']) ?></dd>
+                        <dt class="col-sm-3">Row Count</dt><dd class="col-sm-9"><?= (int)$restoreSnapshot['row_count'] ?></dd>
+                    </dl>
+                </div>
+            </div>
+
+            <div class="alert alert-danger">
+                <strong>This will replace all current data in <em><?= htmlspecialchars($liveTable) ?></em> with the snapshot data.</strong>
+                A safety snapshot of the current state will be created automatically before restore begins.
+            </div>
+
+            <form method="post" action="/admin/snapshots"
+                  onsubmit="return confirm('Restore table to snapshot state? This cannot be undone without using the auto-created safety snapshot.')">
+                <?= csrfField() ?>
+                <input type="hidden" name="action" value="restore">
+                <input type="hidden" name="id" value="<?= $restoreSnapshotId ?>">
+                <button type="submit" class="btn btn-danger">Restore Now</button>
+                <a href="/admin/snapshots" class="btn btn-secondary ms-2">Cancel</a>
+            </form>
+            <?php
+            $page['content'] = ob_get_clean();
+            return;
+        }
+    }
+}
+
 // ── Flash messages ────────────────────────────────────────────────────────────
 
 if (isset($_GET['msg'])) {
-    $msgs    = ['created' => 'Snapshot recorded.', 'deleted' => 'Snapshot deleted.'];
+    $msgs    = ['created' => 'Snapshot recorded.', 'deleted' => 'Snapshot deleted.',
+                'restored' => 'Table restored to snapshot state. A safety snapshot of the prior state was created.'];
     $message = $msgs[$_GET['msg']] ?? '';
 }
 
