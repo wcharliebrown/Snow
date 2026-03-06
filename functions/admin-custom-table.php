@@ -135,6 +135,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (isset($_POST['status'])) {
                 $rowData['status'] = in_array($_POST['status'], ['active', 'inactive']) ? $_POST['status'] : 'active';
             }
+            // VER-01: Capture row state before overwrite (before-image for version history)
+            if ($existingForAcl) {
+                $currentUser = getCurrentUser();
+                dbInsert('row_versions', [
+                    'table_name'   => $tableName,
+                    'row_id'       => $recordId,
+                    'changed_by'   => $currentUser['id'] ?? null,
+                    'changed_at'   => date('Y-m-d H:i:s'),
+                    'row_snapshot' => json_encode($existingForAcl),
+                ]);
+            }
+            // end VER-01
             dbUpdate($tableName, $rowData, 'id = ?', [$recordId]);
             header('Location: /' . $page['path'] . '?msg=updated');
             exit;
