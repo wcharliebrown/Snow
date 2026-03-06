@@ -234,9 +234,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $error = 'Display name is required.';
         } else {
             dbUpdate('custom_tables', [
-                'display_name' => $displayName,
-                'description'  => $description,
-                'status'       => $status,
+                'display_name'           => $displayName,
+                'description'            => $description,
+                'status'                 => $status,
+                'pre_edit_php_filename'  => trim($_POST['pre_edit_php_filename'] ?? '') ?: null,
+                'post_edit_php_filename' => trim($_POST['post_edit_php_filename'] ?? '') ?: null,
             ], 'id = ?', [$tableId]);
             header('Location: /admin/tables?msg=updated');
             exit;
@@ -424,6 +426,18 @@ if ($action === 'add') {
                 <div class="col-md-9">
                     <label class="form-label">Description</label>
                     <textarea name="description" class="form-control" rows="2"><?= htmlspecialchars($_POST['description'] ?? $editTable['description'] ?? '') ?></textarea>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Pre-Edit Hook File <small class="text-muted">(PHP filename in functions/, runs before form renders)</small></label>
+                    <input type="text" name="pre_edit_php_filename" class="form-control"
+                        value="<?= htmlspecialchars($_POST['pre_edit_php_filename'] ?? $editTable['pre_edit_php_filename'] ?? '') ?>"
+                        placeholder="e.g. my-hook.php">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Post-Edit Hook File <small class="text-muted">(PHP filename in functions/, runs after row is saved)</small></label>
+                    <input type="text" name="post_edit_php_filename" class="form-control"
+                        value="<?= htmlspecialchars($_POST['post_edit_php_filename'] ?? $editTable['post_edit_php_filename'] ?? '') ?>"
+                        placeholder="e.g. my-hook.php">
                 </div>
                 <div class="col-md-3">
                     <label class="form-label">Status</label>
