@@ -60,6 +60,79 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         dbUpdate('snapshots', ['status' => 'deleted'], 'id = ?', [$snapshotId]);
         header('Location: /admin/snapshots?msg=deleted');
         exit;
+
+    } elseif ($postAction === 'restore' && $snapshotId) {
+        $restoreSnapshot = dbGetRow("SELECT * FROM snapshots WHERE id = ? AND status = 'active'", [$snapshotId]);
+
+        if (!$restoreSnapshot) {
+            $error = 'Snapshot not found or already used.';
+        } else {
+            $snapshotTable = $restoreSnapshot['snapshot_table'] ?? '';
+            $liveTable     = $restoreSnapshot['table_name'];
+            $currentUser   = getCurrentUser();
+
+            if (!$snapshotTable || !dbTableExists($snapshotTable)) {
+                $error = "Snapshot table no longer exists — cannot restore.";
+            } elseif (!dbTableExists($liveTable)) {
+                $error = "Live table '{$liveTable}' does not exist — cannot restore.";
+            } else {
+                // Step 1: Auto-snapshot the current live table (safety net — admin always has a way back)
+                $liveRowCount      = (int)(dbGetRow("SELECT COUNT(*) AS n FROM `{$liveTable}`", [])['n'] ?? 0);
+                $autoSnapshotTable = 'snapshot_' . $liveTable . '_' . date('YmdHis') . rand(100, 999);
+                $tempTable         = $liveTable . '_prerestore_' . date('YmdHis');
+
+                dbQuery("CREATE TABLE `{$autoSnapshotTable}` AS SELECT * FROM `{$liveTable}`", []);
+                dbInsert('snapshots', [
+                    'table_name'     => $liveTable,
+                    'snapshot_table' => $autoSnapshotTable,
+                    'snapshot_name'  => $autoSnapshotTable,
+                    'description'    => 'Pre-restore auto-snapshot before restoring: ' . $restoreSnapshot['snapshot_name'],
+                    'snapshot_date'  => date('Y-m-d H:i:s'),
+                    'row_count'      => $liveRowCount,
+                    'file_path'      => null,
+                    'status'         => 'active',
+                    'created_by'     => $currentUser['id'] ?? null,
+                ]);
+
+                // Step 2: Atomic rename — live → temp, snapshot → live
+                // Single RENAME TABLE statement: both renames are atomic (MySQL guarantee)
+                // DDL is auto-committed in MySQL; dbBeginTransaction wraps for rollback on exception only
+                dbBeginTransaction();
+                try {
+                    dbQuery(
+                        "RENAME TABLE `{$liveTable}` TO `{$tempTable}`,
+                                      `{$snapshotTable}` TO `{$liveTable}`",
+                        []
+                    );
+                    dbCommit();
+
+                    // Record the temp (pre-restore) table as a snapshot so admin can see and manage it
+                    $tempRowCount = (int)(dbGetRow("SELECT COUNT(*) AS n FROM `{$tempTable}`", [])['n'] ?? 0);
+                    dbInsert('snapshots', [
+                        'table_name'     => $liveTable,
+                        'snapshot_table' => $tempTable,
+                        'snapshot_name'  => $tempTable,
+                        'description'    => 'Pre-restore live data (rename artifact) from restore of: ' . $restoreSnapshot['snapshot_name'],
+                        'snapshot_date'  => date('Y-m-d H:i:s'),
+                        'row_count'      => $tempRowCount,
+                        'file_path'      => null,
+                        'status'         => 'active',
+                        'created_by'     => $currentUser['id'] ?? null,
+                    ]);
+
+                    // Step 3: Mark the used snapshot as 'restored' so it no longer appears as available
+                    dbUpdate('snapshots', ['status' => 'restored'], 'id = ?', [$snapshotId]);
+
+                    header('Location: /admin/snapshots?msg=restored');
+                    exit;
+
+                } catch (Exception $e) {
+                    dbRollback();
+                    $error = 'Restore failed: ' . $e->getMessage() .
+                             ' The auto-safety-snapshot was created but the rename did not complete.';
+                }
+            }
+        }
     }
 }
 
