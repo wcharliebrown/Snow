@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 04-01-PLAN.md
-last_updated: "2026-03-06T21:32:52.173Z"
+stopped_at: Completed 04-03-PLAN.md
+last_updated: "2026-03-06T21:37:17.737Z"
 last_activity: "2026-03-06 — Plan 04-01 complete: Phase 4 extensibility test stubs (EXT-01, SEC-05, EXT-02, EXT-03), 14 tests all passing. test_all.php updated."
 progress:
   total_phases: 5
   completed_phases: 3
   total_plans: 23
-  completed_plans: 20
+  completed_plans: 21
   percent: 87
 ---
 
@@ -61,6 +61,7 @@ Progress: [█████████░] 87% (Phase 01 complete, Phase 02 comp
 | Phase 03-data-integrity P05 | 30 | 2 tasks | 1 files |
 | Phase 04-extensibility P02 | 2 | 1 tasks | 2 files |
 | Phase 04-extensibility P01 | 4 | 2 tasks | 2 files |
+| Phase 04-extensibility P03 | 1 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -122,6 +123,8 @@ Recent decisions affecting current work:
 - [Phase 04-extensibility]: OTP test stubs fixed: user_id=0 violated FK constraint; now resolves real user_id via SELECT FROM users LIMIT 1
 - [Phase 04-01]: login_otp FK violation resolved by fetching real user_id from users table instead of using hardcoded 0
 - [Phase 04-01]: test_extensibility.php supports standalone run via isset($t) guard enabling both direct execution and include from test_all.php
+- [Phase 04-03]: pre_edit hook placed after $record loaded before HTML — hook has full context; post_edit hook in both add and edit branches for consistent create/update extension
+- [Phase 04-03]: Hook errors silently logged via logError() — redirect proceeds regardless; empty hook filename stored as NULL via trim ?: null
 
 ### Pending Todos
 
@@ -135,6 +138,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-06T21:32:52.170Z
-Stopped at: Completed 04-01-PLAN.md
+Last session: 2026-03-06T21:37:17.734Z
+Stopped at: Completed 04-03-PLAN.md
 Resume file: None
