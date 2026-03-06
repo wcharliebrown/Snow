@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 04-02-PLAN.md
-last_updated: "2026-03-06T21:31:30.991Z"
-last_activity: "2026-03-06 — Plan 03-06 complete: Snapshot restore with atomic RENAME TABLE, pre-restore auto-safety-snapshot, and schema-drift warning. VER-05 complete. Phase 3 all 6 plans done."
+stopped_at: Completed 04-01-PLAN.md
+last_updated: "2026-03-06T21:32:52.173Z"
+last_activity: "2026-03-06 — Plan 04-01 complete: Phase 4 extensibility test stubs (EXT-01, SEC-05, EXT-02, EXT-03), 14 tests all passing. test_all.php updated."
 progress:
   total_phases: 5
   completed_phases: 3
   total_plans: 23
-  completed_plans: 19
-  percent: 60
+  completed_plans: 20
+  percent: 87
 ---
 
 # Project State
@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-02-27)
 
 ## Current Position
 
-Phase: 3 of 5 (Data Integrity) — COMPLETE
-Plan: 6 of 6 in current phase (03-06 complete — all Phase 3 plans done)
-Status: In Progress (Phase 4 not yet started)
-Last activity: 2026-03-06 — Plan 03-06 complete: Snapshot restore with atomic RENAME TABLE, pre-restore auto-safety-snapshot, and schema-drift warning. VER-05 complete. Phase 3 all 6 plans done.
+Phase: 4 of 5 (Extensibility) — In Progress
+Plan: 1 of 5 in current phase (04-01 complete — test stubs created)
+Status: In Progress (Phase 4 plan 04-01 complete)
+Last activity: 2026-03-06 — Plan 04-01 complete: Phase 4 extensibility test stubs (EXT-01, SEC-05, EXT-02, EXT-03), 14 tests all passing. test_all.php updated.
 
-Progress: [██████░░░░] 60% (Phase 01 complete, Phase 02 complete, Phase 03 complete — 6/6 plans)
+Progress: [█████████░] 87% (Phase 01 complete, Phase 02 complete, Phase 03 complete, Phase 04 plan 01 of 5 done)
 
 ## Performance Metrics
 
@@ -60,6 +60,7 @@ Progress: [██████░░░░] 60% (Phase 01 complete, Phase 02 comp
 | Phase 03-data-integrity P04 | 20 | 3 tasks | 1 files |
 | Phase 03-data-integrity P05 | 30 | 2 tasks | 1 files |
 | Phase 04-extensibility P02 | 2 | 1 tasks | 2 files |
+| Phase 04-extensibility P01 | 4 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -119,6 +120,8 @@ Recent decisions affecting current work:
 - [Phase 04-extensibility]: Phase 4 migration extracted by line number (not sed pattern) to avoid ambiguity at Phase 3/4 adjacent delimiter boundary
 - [Phase 04-extensibility]: login_otp FK to users ON DELETE CASCADE — orphaned OTP rows auto-cleaned when user deleted
 - [Phase 04-extensibility]: OTP test stubs fixed: user_id=0 violated FK constraint; now resolves real user_id via SELECT FROM users LIMIT 1
+- [Phase 04-01]: login_otp FK violation resolved by fetching real user_id from users table instead of using hardcoded 0
+- [Phase 04-01]: test_extensibility.php supports standalone run via isset($t) guard enabling both direct execution and include from test_all.php
 
 ### Pending Todos
 
@@ -132,6 +135,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-06T21:31:30.988Z
-Stopped at: Completed 04-02-PLAN.md
+Last session: 2026-03-06T21:32:52.170Z
+Stopped at: Completed 04-01-PLAN.md
 Resume file: None

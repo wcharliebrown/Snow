@@ -39,8 +39,8 @@ Requirements for initial release. Each maps to a roadmap phase.
 ### Extensibility
 
 - [x] **EXT-01**: Admin can register PHP hook files that execute automatically on row create/modify for any table
-- [ ] **EXT-02**: Admin can create custom web pages served by the framework
-- [ ] **EXT-03**: Admin can create email templates for customized outbound messages
+- [x] **EXT-02**: Admin can create custom web pages served by the framework
+- [x] **EXT-03**: Admin can create email templates for customized outbound messages
 - [ ] **EXT-04**: Admin can schedule row activation, deactivation, or deletion to occur on a specific future date
 
 ## v2 Requirements
@@ -94,8 +94,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | VER-04 | Phase 3 | Complete |
 | VER-05 | Phase 3 | Complete |
 | EXT-01 | Phase 4 | Complete |
-| EXT-02 | Phase 4 | Pending |
-| EXT-03 | Phase 4 | Pending |
+| EXT-02 | Phase 4 | Complete |
+| EXT-03 | Phase 4 | Complete |
 | EXT-04 | Phase 5 | Pending |
 
 **Coverage:**
