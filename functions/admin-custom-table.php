@@ -44,9 +44,10 @@ $error    = '';
 // Flash messages
 if (isset($_GET['msg'])) {
     $msgs = [
-        'created' => 'Record created.',
-        'updated' => 'Record updated.',
-        'deleted' => 'Record deleted.',
+        'created'  => 'Record created.',
+        'updated'  => 'Record updated.',
+        'deleted'  => 'Record deleted.',
+        'reverted' => 'Row reverted to selected version.',
     ];
     $message = $msgs[$_GET['msg']] ?? '';
 }
@@ -157,6 +158,59 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         dbQuery("DELETE FROM `{$tableName}` WHERE id = ?", [$recordId]);
         header('Location: /' . $page['path'] . '?msg=deleted');
         exit;
+
+    } elseif ($postAction === 'revert' && $recordId) {
+        $versionId = isset($_POST['version_id']) ? (int)$_POST['version_id'] : 0;
+
+        // VER-02: Load the version to restore
+        $version = dbGetRow(
+            "SELECT * FROM row_versions WHERE id = ? AND table_name = ? AND row_id = ?",
+            [$versionId, $tableName, $recordId]
+        );
+
+        if (!$version) {
+            $error    = 'Version not found or does not belong to this row.';
+            $hasError = true;
+            $action   = 'edit';
+        } else {
+            // ACL check: user must have edit permission on this row
+            $existingForAcl = dbGetRow("SELECT * FROM `{$tableName}` WHERE id = ?", [$recordId]);
+            if (!$existingForAcl || !canEditRow($existingForAcl)) {
+                http_response_code(403);
+                $error    = 'You do not have permission to edit this record.';
+                $hasError = true;
+                $action   = 'edit';
+            }
+
+            if (!isset($hasError) || !$hasError) {
+                $currentUser = getCurrentUser();
+
+                // Step 1: Save current state as a new row_versions entry (current state is never lost)
+                dbInsert('row_versions', [
+                    'table_name'   => $tableName,
+                    'row_id'       => $recordId,
+                    'changed_by'   => $currentUser['id'] ?? null,
+                    'changed_at'   => date('Y-m-d H:i:s'),
+                    'row_snapshot' => json_encode($existingForAcl),
+                ]);
+
+                // Step 2: Decode the historical snapshot (always true for associative array — Pitfall 6)
+                $restoredData = json_decode($version['row_snapshot'], true);
+
+                // Step 3: Strip columns that must not be written back
+                unset($restoredData['id'], $restoredData['created_at'], $restoredData['modified_at']);
+
+                // Step 4: Filter to only columns that exist in the current live table (handles schema drift)
+                $liveCols = dbGetRows("SHOW COLUMNS FROM `{$tableName}`", []);
+                $liveColNames = array_column($liveCols, 'Field');
+                $restoredData = array_intersect_key($restoredData, array_flip($liveColNames));
+
+                // Step 5: Apply the restored values
+                dbUpdate($tableName, $restoredData, 'id = ?', [$recordId]);
+                header('Location: /' . $page['path'] . '?action=edit&id=' . $recordId . '&msg=reverted');
+                exit;
+            }
+        }
     }
 }
 
@@ -302,6 +356,40 @@ if ($action === 'add') {
         // Load all active groups for the ACL selector widget
         $allGroups = dbGetRows("SELECT id, name FROM user_groups_list WHERE status = 'active' ORDER BY name", []);
         $currentRecord = $record;
+
+        // VER-02: Load version history for diff/revert selectors (most recent 20 per CONTEXT.md Claude's Discretion)
+        $versions = dbGetRows(
+            "SELECT id, changed_by, changed_at FROM row_versions
+             WHERE table_name = ? AND row_id = ?
+             ORDER BY changed_at DESC LIMIT 20",
+            [$tableName, $recordId]
+        );
+        $totalVersionCount = (int)(dbGetRow(
+            "SELECT COUNT(*) AS n FROM row_versions WHERE table_name = ? AND row_id = ?",
+            [$tableName, $recordId]
+        )['n'] ?? 0);
+
+        // VER-02: Load selected version for inline diff (version_diff GET param)
+        $versionDiff = null;
+        $versionDiffFields = [];
+        if (!empty($_GET['version_diff']) && !empty($versions)) {
+            $selectedVersionId = (int)$_GET['version_diff'];
+            $versionDiffRow = dbGetRow(
+                "SELECT * FROM row_versions WHERE id = ? AND table_name = ? AND row_id = ?",
+                [$selectedVersionId, $tableName, $recordId]
+            );
+            if ($versionDiffRow) {
+                $versionDiff = json_decode($versionDiffRow['row_snapshot'], true);
+                // Compute which fields differ (string cast both sides)
+                foreach ($versionDiff as $col => $oldVal) {
+                    if (array_key_exists($col, $currentRecord) &&
+                        (string)$oldVal !== (string)($currentRecord[$col] ?? '')) {
+                        $versionDiffFields[] = $col;
+                    }
+                }
+            }
+        }
+
         // On POST repopulation: use submitted array. On fresh GET: parse DB comma-separated string.
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $currentViewGroups = array_filter(array_map('intval',
