@@ -1,6 +1,6 @@
 # Snow Framework
 
-> **v1.0 MVP · 43 source files · ~7,400 lines of code · zero external dependencies**
+> **v1.0 MVP · 43 source files · ~8,000 lines of code · zero external dependencies**
 
 A zero-dependency PHP admin framework for LAMP stacks. Any MySQL table — custom or built-in — gets ACL, versioning, CRUD, search/sort/filter, and reporting without writing boilerplate for each table.
 
