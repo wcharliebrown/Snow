@@ -4,7 +4,7 @@ milestone: v1.0
 milestone_name: milestone
 status: completed
 stopped_at: Completed 05-05-PLAN.md (v1.0 milestone complete — all 5 phases done)
-last_updated: "2026-03-17T22:42:43.469Z"
+last_updated: "2026-03-17T22:44:24.361Z"
 last_activity: "2026-03-17 — Plan 05-05 complete: Phase 5 human verification approved. DATA-02, DATA-03, DATA-04, EXT-04 all browser-verified. All 12 Phase 5 tests passing. v1.0 milestone complete."
 progress:
   total_phases: 5
@@ -18,10 +18,10 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-02-27)
+See: .planning/PROJECT.md (updated 2026-03-17)
 
 **Core value:** Any table in the database can be managed through a consistent, ACL-controlled admin interface with full versioning and rollback — without writing boilerplate for each new table.
-**Current focus:** Phase 2 — Access Control
+**Current focus:** Planning next milestone (/gsd:new-milestone)
 
 ## Current Position
 
@@ -154,9 +154,7 @@ None.
 
 ### Blockers/Concerns
 
-- Phase 1: Existing custom table provisioner may have schema injection vulnerability (PITFALL-A06) — audit is part of Phase 1 scope
-- Phase 3: Snapshot restore path has schema-drift edge cases (columns added/removed after snapshot taken) — resolve during Phase 3 planning
-- Phase 4: TOTP was deferred from v1 (SEC-05 uses email OTP only); TOTP (AUTH-V2-01) is v2
+*(v1.0 complete — no open blockers. Prior concerns resolved during execution.)*
 
 ## Session Continuity
 
