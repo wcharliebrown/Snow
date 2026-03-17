@@ -247,4 +247,4 @@ Create and manage custom tables from the admin UI:
 
 ## License
 
-Provided as-is for educational and development purposes. Review and customize before production use.
+[MIT License](LICENSE) — Copyright (c) 2026 Charlie Brown
