@@ -24,9 +24,9 @@ Requirements for initial release. Each maps to a roadmap phase.
 ### Data Management
 
 - [x] **DATA-01**: Every managed table automatically has standard fields: created_at, modified_at, status, view_groups, edit_groups
-- [ ] **DATA-02**: Admin can add custom fields to any custom table via admin UI
-- [ ] **DATA-03**: Admin can customize the edit form layout for each table
-- [ ] **DATA-04**: User can search, sort, and filter records on any list view using UI controls
+- [x] **DATA-02**: Admin can add custom fields to any custom table via admin UI
+- [x] **DATA-03**: Admin can customize the edit form layout for each table
+- [x] **DATA-04**: User can search, sort, and filter records on any list view using UI controls
 
 ### Versioning
 
@@ -41,7 +41,7 @@ Requirements for initial release. Each maps to a roadmap phase.
 - [x] **EXT-01**: Admin can register PHP hook files that execute automatically on row create/modify for any table
 - [x] **EXT-02**: Admin can create custom web pages served by the framework
 - [x] **EXT-03**: Admin can create email templates for customized outbound messages
-- [ ] **EXT-04**: Admin can schedule row activation, deactivation, or deletion to occur on a specific future date
+- [x] **EXT-04**: Admin can schedule row activation, deactivation, or deletion to occur on a specific future date
 
 ## v2 Requirements
 
@@ -85,9 +85,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ACL-02 | Phase 2 | Complete |
 | ACL-03 | Phase 2 | Complete |
 | DATA-01 | Phase 2 | Complete |
-| DATA-02 | Phase 5 | Pending |
-| DATA-03 | Phase 5 | Pending |
-| DATA-04 | Phase 5 | Pending |
+| DATA-02 | Phase 5 | Complete |
+| DATA-03 | Phase 5 | Complete |
+| DATA-04 | Phase 5 | Complete |
 | VER-01 | Phase 3 | Complete |
 | VER-02 | Phase 3 | Complete |
 | VER-03 | Phase 3 | Complete |
@@ -96,7 +96,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | EXT-01 | Phase 4 | Complete |
 | EXT-02 | Phase 4 | Complete |
 | EXT-03 | Phase 4 | Complete |
-| EXT-04 | Phase 5 | Pending |
+| EXT-04 | Phase 5 | Complete |
 
 **Coverage:**
 - v1 requirements: 21 total

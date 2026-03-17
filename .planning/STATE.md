@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 5 context gathered
-last_updated: "2026-03-17T20:57:59.755Z"
+stopped_at: Completed 05-01-PLAN.md
+last_updated: "2026-03-17T21:19:07.764Z"
 last_activity: "2026-03-06 — Plan 04-01 complete: Phase 4 extensibility test stubs (EXT-01, SEC-05, EXT-02, EXT-03), 14 tests all passing. test_all.php updated."
 progress:
   total_phases: 5
   completed_phases: 4
-  total_plans: 23
-  completed_plans: 23
+  total_plans: 28
+  completed_plans: 24
   percent: 87
 ---
 
@@ -64,6 +64,7 @@ Progress: [█████████░] 87% (Phase 01 complete, Phase 02 comp
 | Phase 04-extensibility P03 | 1 | 2 tasks | 2 files |
 | Phase 04-extensibility P04 | 4 | 2 tasks | 4 files |
 | Phase 04-extensibility P05 | 5 | 1 tasks | 2 files |
+| Phase 05-user-experience P01 | 3 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -132,6 +133,8 @@ Recent decisions affecting current work:
 - [Phase 04-extensibility]: require_2fa checkbox uses isset() not ?? 0 — unchecked checkboxes absent from POST data, isset() correctly saves 0 on uncheck
 - [Phase 04-05]: Both admin-pages.php and admin-emails.php were already correct — content textarea uses htmlspecialchars for display only; processTokens str_replace outputs raw HTML; no double-escaping in serving path
 - [Phase 04-05]: login_otp email template body fixed (user caught during human verify checkpoint) — {{first_name}} and {{otp_code}} tokens now explicit; fix applied to live DB and database_schema.sql seed; commit 69dda4d
+- [Phase 05-01]: assertTrue(!empty($col)) used for INFORMATION_SCHEMA schema checks (not assertNotNull) — dbGetRow returns false not null on no-row, so assertNotNull incorrectly passes
+- [Phase 05-01]: DATA-03 col_width tests: 3 tests written (null default, half, full) all passing immediately as pure PHP logic
 
 ### Pending Todos
 
@@ -145,6 +148,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-17T20:57:59.752Z
-Stopped at: Phase 5 context gathered
-Resume file: .planning/phases/05-user-experience/05-CONTEXT.md
+Last session: 2026-03-17T21:19:07.760Z
+Stopped at: Completed 05-01-PLAN.md
+Resume file: None
