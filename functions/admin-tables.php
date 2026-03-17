@@ -268,6 +268,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $fieldType = trim($_POST['field_type'] ?? '');
         $label     = trim($_POST['display_label'] ?? '');
         $order     = (int)($_POST['display_order'] ?? 0);
+        $colWidth  = in_array($_POST['col_width'] ?? '', ['half', 'full'], true) ? $_POST['col_width'] : 'half';
         $isVisible  = isset($_POST['is_visible'])  ? 1 : 0;
         $isRequired = isset($_POST['is_required']) ? 1 : 0;
         $isUnique   = isset($_POST['is_unique'])   ? 1 : 0;
@@ -291,6 +292,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'field_type'    => $fieldType,
                     'display_label' => $label,
                     'display_order' => $order,
+                    'col_width'     => $colWidth,
                     'is_visible'    => $isVisible,
                     'is_required'   => $isRequired,
                     'is_unique'     => $isUnique,
@@ -486,7 +488,7 @@ if ($action === 'add') {
         <?php if ($fields): ?>
         <table class="table table-sm table-striped mb-4">
             <thead class="table-dark">
-                <tr><th>Field</th><th>Type</th><th>Label</th><th>Order</th><th>Vis</th><th>Req</th><th>Uniq</th><th>Default</th><th></th></tr>
+                <tr><th>Field</th><th>Type</th><th>Label</th><th>Order</th><th>Width</th><th>Vis</th><th>Req</th><th>Uniq</th><th>Default</th><th></th></tr>
             </thead>
             <tbody>
             <?php foreach ($fields as $f): ?>
@@ -495,6 +497,7 @@ if ($action === 'add') {
                     <td><?= htmlspecialchars($f['field_type']) ?></td>
                     <td><?= htmlspecialchars($f['display_label']) ?></td>
                     <td><?= (int)$f['display_order'] ?></td>
+                    <td><?= htmlspecialchars($f['col_width'] ?? 'half') ?></td>
                     <td><?= $f['is_visible']  ? '✓' : '' ?></td>
                     <td><?= $f['is_required'] ? '✓' : '' ?></td>
                     <td><?= $f['is_unique']   ? '✓' : '' ?></td>
@@ -543,6 +546,13 @@ if ($action === 'add') {
                         <div class="col-md-1">
                             <label class="form-label form-label-sm">Order</label>
                             <input type="number" name="display_order" class="form-control form-control-sm" value="0">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label form-label-sm">Width</label>
+                            <select name="col_width" class="form-select form-select-sm">
+                                <option value="half">Half</option>
+                                <option value="full">Full</option>
+                            </select>
                         </div>
                         <div class="col-md-3">
                             <label class="form-label form-label-sm">Default Value</label>
