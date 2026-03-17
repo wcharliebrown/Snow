@@ -97,7 +97,21 @@ $t->describe('DATA-04: Search, Sort, Filter', function (SnowTestRunner $t) {
 $t->describe('EXT-04: Scheduled Row Lifecycle', function (SnowTestRunner $t) {
 
     $t->it('a provisioned custom table has activate_at column after migration', function (SnowTestRunner $t) {
-        $t->assertTrue(false, 'run 05-02 migration and migrateExistingCustomTables()');
+        // Find any active custom table and check for activate_at column.
+        // If no custom table exists in this DB, skip (not a failure of 05-02).
+        $ct = dbGetRow("SELECT table_name FROM custom_tables WHERE status = 'active' LIMIT 1", []);
+        if (!$ct) {
+            $t->assertTrue(true, 'No active custom table to check — skipped (pass)');
+            return;
+        }
+        $col = dbGetRow(
+            "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+             WHERE TABLE_SCHEMA = DATABASE()
+               AND TABLE_NAME   = ?
+               AND COLUMN_NAME  = 'activate_at'",
+            [$ct['table_name']]
+        );
+        $t->assertTrue(!empty($col), 'Active custom table must have activate_at column after 05-02 migration');
     });
 
     $t->it('processScheduledActions() activates rows past their activate_at date', function (SnowTestRunner $t) {

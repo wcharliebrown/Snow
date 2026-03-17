@@ -115,12 +115,15 @@ function provisionCustomTable(array $tableDef): void {
 
     // Create MySQL table
     dbQuery("CREATE TABLE IF NOT EXISTS `{$tableName}` (
-        `id`          INT          NOT NULL AUTO_INCREMENT PRIMARY KEY,
-        `status`      VARCHAR(20)  NOT NULL DEFAULT 'active',
-        `view_groups` VARCHAR(500) DEFAULT NULL,
-        `edit_groups` VARCHAR(500) DEFAULT NULL,
-        `created_at`  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        `modified_at` DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        `id`            INT          NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        `status`        VARCHAR(20)  NOT NULL DEFAULT 'active',
+        `view_groups`   VARCHAR(500) DEFAULT NULL,
+        `edit_groups`   VARCHAR(500) DEFAULT NULL,
+        `created_at`    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        `modified_at`   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        `activate_at`   DATETIME     NULL DEFAULT NULL,
+        `deactivate_at` DATETIME     NULL DEFAULT NULL,
+        `delete_at`     DATETIME     NULL DEFAULT NULL
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
 
     // Create admin page if not exists
@@ -150,11 +153,15 @@ function provisionCustomTable(array $tableDef): void {
 function migrateExistingCustomTables(): void {
     $tables = dbGetRows("SELECT table_name FROM custom_tables WHERE status = 'active'", []);
     $standardCols = [
-        'status'      => "VARCHAR(20) NOT NULL DEFAULT 'active'",
-        'view_groups' => 'VARCHAR(500) DEFAULT NULL',
-        'edit_groups' => 'VARCHAR(500) DEFAULT NULL',
-        'created_at'  => 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP',
-        'modified_at' => 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP',
+        'status'        => "VARCHAR(20) NOT NULL DEFAULT 'active'",
+        'view_groups'   => 'VARCHAR(500) DEFAULT NULL',
+        'edit_groups'   => 'VARCHAR(500) DEFAULT NULL',
+        'created_at'    => 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP',
+        'modified_at'   => 'DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP',
+        // Phase 5 additions: scheduled row lifecycle (EXT-04)
+        'activate_at'   => 'DATETIME NULL',
+        'deactivate_at' => 'DATETIME NULL',
+        'delete_at'     => 'DATETIME NULL',
     ];
     foreach ($tables as $t) {
         $tableName = $t['table_name'];
