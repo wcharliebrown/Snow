@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 05-02-PLAN.md
-last_updated: "2026-03-17T21:24:23.561Z"
+stopped_at: Completed 05-03-PLAN.md
+last_updated: "2026-03-17T21:34:37.805Z"
 last_activity: "2026-03-06 — Plan 04-01 complete: Phase 4 extensibility test stubs (EXT-01, SEC-05, EXT-02, EXT-03), 14 tests all passing. test_all.php updated."
 progress:
   total_phases: 5
   completed_phases: 4
   total_plans: 28
-  completed_plans: 25
+  completed_plans: 26
   percent: 87
 ---
 
@@ -66,6 +66,7 @@ Progress: [█████████░] 87% (Phase 01 complete, Phase 02 comp
 | Phase 04-extensibility P05 | 5 | 1 tasks | 2 files |
 | Phase 05-user-experience P01 | 3 | 2 tasks | 2 files |
 | Phase 05-user-experience P02 | 3 | 2 tasks | 3 files |
+| Phase 05-user-experience P03 | 8 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -138,6 +139,9 @@ Recent decisions affecting current work:
 - [Phase 05-01]: DATA-03 col_width tests: 3 tests written (null default, half, full) all passing immediately as pure PHP logic
 - [Phase 05-02]: Schedule columns (activate_at, deactivate_at, delete_at) added per-table via PHP provisioning functions, not to central framework schema — keeps EXT-04 row lifecycle independent
 - [Phase 05-02]: EXT-04 test stub upgraded from assertTrue(false) to real INFORMATION_SCHEMA check with skip-if-no-table guard — matches DATA-02 pattern
+- [Phase 05-03]: processScheduledActions() defined in admin-custom-table.php; mirrored via function_exists() guard in test file to avoid requiring page handler in CLI test context
+- [Phase 05-03]: EXT-04 tests use uniqid() sentinel in varchar column to identify test rows — handles tables without AUTO_INCREMENT on id (pre-existing test DB schema issue)
+- [Phase 05-03]: col_width defaults to 'half' (col-md-6) when null — backward compatible with existing fields
 
 ### Pending Todos
 
@@ -151,6 +155,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-17T21:24:23.557Z
-Stopped at: Completed 05-02-PLAN.md
+Last session: 2026-03-17T21:34:37.802Z
+Stopped at: Completed 05-03-PLAN.md
 Resume file: None
