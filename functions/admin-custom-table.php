@@ -831,6 +831,63 @@ if ($action === 'add') {
     $visibleCount = count($rows);
     ?>
     <?php if ($message): ?><div class="alert alert-success"><?= htmlspecialchars($message) ?></div><?php endif; ?>
+    <?php
+    // Build base path for form action and clear links
+    $listPath = htmlspecialchars($page['path']);
+    $currentQ = htmlspecialchars($_GET['q'] ?? '');
+    $currentStatus = htmlspecialchars($_GET['status'] ?? '');
+    ?>
+    <!-- DATA-04: Search bar row -->
+    <div class="mb-3">
+        <!-- Simple search form -->
+        <form method="get" action="/<?= $listPath ?>" class="d-flex gap-2 align-items-center flex-wrap mb-2">
+            <input type="text" name="q" class="form-control form-control-sm" style="max-width:280px"
+                   placeholder="Search <?= htmlspecialchars($displayName) ?>..."
+                   value="<?= $currentQ ?>">
+            <!-- Status filter dropdown -->
+            <select name="status" class="form-select form-select-sm" style="max-width:130px">
+                <option value="" <?= $currentStatus === '' ? 'selected' : '' ?>>All statuses</option>
+                <option value="active"   <?= $currentStatus === 'active'   ? 'selected' : '' ?>>Active</option>
+                <option value="inactive" <?= $currentStatus === 'inactive' ? 'selected' : '' ?>>Inactive</option>
+            </select>
+            <button type="submit" class="btn btn-primary btn-sm">Search</button>
+            <?php if ($currentQ !== '' || $currentStatus !== ''): ?>
+            <a href="/<?= $listPath ?>" class="btn btn-secondary btn-sm">Clear</a>
+            <?php endif; ?>
+            <!-- Advanced toggle -->
+            <button class="btn btn-outline-secondary btn-sm ms-auto" type="button"
+                    data-bs-toggle="collapse" data-bs-target="#advSearchPanel"
+                    aria-expanded="<?= $advActive ? 'true' : 'false' ?>">
+                Advanced
+            </button>
+        </form>
+
+        <!-- Advanced search panel (Bootstrap collapse) -->
+        <?php $collapseShow = $advActive ? 'show' : ''; ?>
+        <div class="collapse <?= $collapseShow ?>" id="advSearchPanel">
+            <div class="card card-body py-2 mb-2">
+                <form method="get" action="/<?= $listPath ?>">
+                    <?php if ($currentStatus !== ''): ?>
+                    <input type="hidden" name="status" value="<?= $currentStatus ?>">
+                    <?php endif; ?>
+                    <div class="row g-2 mb-2">
+                    <?php foreach ($fields as $f): ?>
+                        <div class="col-md-3">
+                            <label class="form-label form-label-sm"><?= htmlspecialchars($f['display_label']) ?></label>
+                            <input type="text" name="adv[<?= htmlspecialchars($f['field_name']) ?>]"
+                                   class="form-control form-control-sm"
+                                   value="<?= htmlspecialchars($_GET['adv'][$f['field_name']] ?? '') ?>">
+                        </div>
+                    <?php endforeach; ?>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary btn-sm">Search</button>
+                        <a href="/<?= $listPath ?>" class="btn btn-secondary btn-sm">Clear</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
     <div class="d-flex justify-content-between align-items-center mb-3">
         <span><?= (int)$visibleCount ?> record<?= $visibleCount !== 1 ? 's' : '' ?></span>
         <a href="/<?= htmlspecialchars($page['path']) ?>?action=add" class="btn btn-success btn-sm">+ Add <?= htmlspecialchars($displayName) ?></a>
@@ -840,12 +897,14 @@ if ($action === 'add') {
     <table class="table table-striped table-hover">
         <thead class="table-dark">
             <tr>
-                <th>ID</th>
+                <th><?= sortLink('id', 'ID', $_GET, $sort, $dir) ?></th>
                 <?php foreach ($fields as $f): ?>
-                    <?php if ($f['is_visible']): ?><th><?= htmlspecialchars($f['display_label']) ?></th><?php endif; ?>
+                    <?php if ($f['is_visible']): ?>
+                    <th><?= sortLink($f['field_name'], $f['display_label'], $_GET, $sort, $dir) ?></th>
+                    <?php endif; ?>
                 <?php endforeach; ?>
                 <th>View Groups</th>
-                <th>Status</th>
+                <th><?= sortLink('status', 'Status', $_GET, $sort, $dir) ?></th>
                 <th>Actions</th>
             </tr>
         </thead>
