@@ -105,7 +105,14 @@ Plans:
   2. Admin can customize the visible columns and filter controls for each table's list view from the admin UI
   3. Admin can customize the field layout of the edit form for any custom table
   4. Admin can set an activate_at or deactivate_at date on any row; the system automatically changes the row's status on that date without manual intervention
-**Plans**: TBD
+**Plans**: 5 plans
+
+Plans:
+- [ ] 05-01-PLAN.md — Test stubs: test_user_experience.php + register in test_all.php (DATA-02, DATA-03, DATA-04, EXT-04)
+- [ ] 05-02-PLAN.md — DB migration (col_width on custom_table_fields) + extend provisionCustomTable/migrateExistingCustomTables for schedule columns
+- [ ] 05-03-PLAN.md — col_width UI in fields view + col_width-driven form layout + schedule inputs + processScheduledActions()
+- [ ] 05-04-PLAN.md — DATA-04: WHERE builder, sortLink(), search bar, advanced panel, sortable headers in list view
+- [ ] 05-05-PLAN.md — Human verification checkpoint for all Phase 5 UX features
 
 ## Progress
 
@@ -118,7 +125,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 2. Access Control | 6/6 | Complete   | 2026-03-01 |
 | 3. Data Integrity | 6/6 | Complete   | 2026-03-06 |
 | 4. Extensibility | 5/5 | Complete   | 2026-03-06 |
-| 5. User Experience | 0/TBD | Not started | - |
+| 5. User Experience | 0/5 | Not started | - |
 
 ---
 *Roadmap created: 2026-02-27*
