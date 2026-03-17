@@ -7,6 +7,41 @@
 
 require_once __DIR__ . '/acl.php';
 
+/**
+ * EXT-04: Process scheduled row lifecycle actions for the current table.
+ * Called on every list view load. Idempotent: processed rows have their
+ * schedule timestamp set to NULL after firing.
+ * Uses INFORMATION_SCHEMA guard — safe to call on tables without schedule columns.
+ */
+function processScheduledActions(string $tableName): void {
+    $now = date('Y-m-d H:i:s');
+    $hasActivateAt = (int)(dbGetRow(
+        "SELECT COUNT(*) AS n FROM INFORMATION_SCHEMA.COLUMNS
+         WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = 'activate_at'",
+        [$tableName]
+    )['n'] ?? 0);
+    if ($hasActivateAt) {
+        // Activate rows past their activate_at date
+        dbQuery(
+            "UPDATE `{$tableName}` SET status = 'active', activate_at = NULL
+             WHERE activate_at IS NOT NULL AND activate_at <= ? AND status != 'active'",
+            [$now]
+        );
+        // Deactivate rows past their deactivate_at date
+        dbQuery(
+            "UPDATE `{$tableName}` SET status = 'inactive', deactivate_at = NULL
+             WHERE deactivate_at IS NOT NULL AND deactivate_at <= ? AND status = 'active'",
+            [$now]
+        );
+        // Delete rows past their delete_at date
+        dbQuery(
+            "DELETE FROM `{$tableName}`
+             WHERE delete_at IS NOT NULL AND delete_at <= ?",
+            [$now]
+        );
+    }
+}
+
 requirePermission('table_data_access');
 
 // Derive table name from URL path
@@ -89,6 +124,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (isset($_POST['status'])) {
                 $rowData['status'] = in_array($_POST['status'], ['active', 'inactive']) ? $_POST['status'] : 'active';
             }
+            // EXT-04: save schedule fields if table has schedule columns
+            $hasSchedulePost = (bool)(dbGetRow(
+                "SELECT COUNT(*) AS n FROM INFORMATION_SCHEMA.COLUMNS
+                 WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = 'activate_at'",
+                [$tableName]
+            )['n'] ?? 0);
+            if ($hasSchedulePost) {
+                $rowData['activate_at']   = trim($_POST['activate_at']   ?? '') ?: null;
+                $rowData['deactivate_at'] = trim($_POST['deactivate_at'] ?? '') ?: null;
+                $rowData['delete_at']     = trim($_POST['delete_at']     ?? '') ?: null;
+            }
             // $record is [] for new records
             $record = [];
             dbInsert($tableName, $rowData);
@@ -150,6 +196,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Standard field: status
             if (isset($_POST['status'])) {
                 $rowData['status'] = in_array($_POST['status'], ['active', 'inactive']) ? $_POST['status'] : 'active';
+            }
+            // EXT-04: save schedule fields if table has schedule columns
+            $hasSchedulePost = (bool)(dbGetRow(
+                "SELECT COUNT(*) AS n FROM INFORMATION_SCHEMA.COLUMNS
+                 WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = 'activate_at'",
+                [$tableName]
+            )['n'] ?? 0);
+            if ($hasSchedulePost) {
+                $rowData['activate_at']   = trim($_POST['activate_at']   ?? '') ?: null;
+                $rowData['deactivate_at'] = trim($_POST['deactivate_at'] ?? '') ?: null;
+                $rowData['delete_at']     = trim($_POST['delete_at']     ?? '') ?: null;
             }
             // VER-01: Capture row state before overwrite (before-image for version history)
             if ($existingForAcl) {
@@ -281,6 +338,12 @@ if ($action === 'add') {
         (array)($_POST['view_groups'] ?? [])));
     $currentEditGroups = array_filter(array_map('intval',
         (array)($_POST['edit_groups'] ?? [])));
+    // EXT-04: check if this table has schedule columns
+    $hasSchedule = (bool)(dbGetRow(
+        "SELECT COUNT(*) AS n FROM INFORMATION_SCHEMA.COLUMNS
+         WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = 'activate_at'",
+        [$tableName]
+    )['n'] ?? 0);
     ?>
     <?php if ($error): ?><div class="alert alert-danger"><?= $error ?></div><?php endif; ?>
     <a href="/<?= htmlspecialchars($page['path']) ?>" class="btn btn-secondary btn-sm mb-3">&larr; Back to <?= htmlspecialchars($displayName) ?></a>
@@ -289,7 +352,8 @@ if ($action === 'add') {
         <input type="hidden" name="action" value="add">
         <div class="row g-3">
             <?php foreach ($fields as $f): ?>
-            <div class="col-md-6">
+            <?php $colClass = ($f['col_width'] ?? 'half') === 'full' ? 'col-12' : 'col-md-6'; ?>
+            <div class="<?= $colClass ?>">
                 <label class="form-label">
                     <?= htmlspecialchars($f['display_label']) ?>
                     <?= $f['is_required'] ? '<span class="text-danger">*</span>' : '' ?>
@@ -310,6 +374,34 @@ if ($action === 'add') {
                     <option value="inactive" <?= (($_POST['status'] ?? '') === 'inactive') ? 'selected' : '' ?>>Inactive</option>
                 </select>
             </div>
+            <?php if ($hasSchedule): ?>
+            <!-- EXT-04: Scheduling (activate_at, deactivate_at, delete_at) -->
+            <div class="col-12">
+                <div class="card border-secondary">
+                    <div class="card-header py-2 bg-light"><strong>Scheduling</strong> <small class="text-muted fw-normal">— optional, leave blank to skip</small></div>
+                    <div class="card-body">
+                        <div class="row g-2">
+                            <div class="col-md-4">
+                                <label class="form-label form-label-sm">Activate At</label>
+                                <input type="datetime-local" name="activate_at" class="form-control form-control-sm"
+                                       value="<?= htmlspecialchars(str_replace(' ', 'T', $_POST['activate_at'] ?? '')) ?>">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label form-label-sm">Deactivate At</label>
+                                <input type="datetime-local" name="deactivate_at" class="form-control form-control-sm"
+                                       value="<?= htmlspecialchars(str_replace(' ', 'T', $_POST['deactivate_at'] ?? '')) ?>">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label form-label-sm">Delete At <span class="text-danger">&#9888;</span></label>
+                                <input type="datetime-local" name="delete_at" class="form-control form-control-sm"
+                                       value="<?= htmlspecialchars(str_replace(' ', 'T', $_POST['delete_at'] ?? '')) ?>">
+                                <div class="form-text text-danger">Row will be permanently deleted</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <?php endif; ?>
             <?php if (hasPermission('table_management')): ?>
             <!-- View Groups -->
             <div class="col-12">
@@ -431,6 +523,13 @@ if ($action === 'add') {
                 explode(',', $currentRecord['edit_groups'] ?? '')));
         }
 
+        // EXT-04: check if this table has schedule columns
+        $hasSchedule = (bool)(dbGetRow(
+            "SELECT COUNT(*) AS n FROM INFORMATION_SCHEMA.COLUMNS
+             WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = 'activate_at'",
+            [$tableName]
+        )['n'] ?? 0);
+
         // EXT-01: Execute pre_edit hook if registered for this table
         $preHook = $tableDef['pre_edit_php_filename'] ?? null;
         if ($preHook) {
@@ -533,7 +632,8 @@ if ($action === 'add') {
             <?php if (!$canEdit): ?><fieldset disabled><?php endif; ?>
             <div class="row g-3">
                 <?php foreach ($fields as $f): ?>
-                <div class="col-md-6">
+                <?php $colClass = ($f['col_width'] ?? 'half') === 'full' ? 'col-12' : 'col-md-6'; ?>
+                <div class="<?= $colClass ?>">
                     <label class="form-label">
                         <?= htmlspecialchars($f['display_label']) ?>
                         <?= $f['is_required'] ? '<span class="text-danger">*</span>' : '' ?>
@@ -549,6 +649,34 @@ if ($action === 'add') {
                         <option value="inactive" <?= (($_POST['status'] ?? $currentRecord['status'] ?? '') === 'inactive') ? 'selected' : '' ?>>Inactive</option>
                     </select>
                 </div>
+                <?php if ($hasSchedule): ?>
+                <!-- EXT-04: Scheduling (activate_at, deactivate_at, delete_at) -->
+                <div class="col-12">
+                    <div class="card border-secondary">
+                        <div class="card-header py-2 bg-light"><strong>Scheduling</strong> <small class="text-muted fw-normal">— optional, leave blank to skip</small></div>
+                        <div class="card-body">
+                            <div class="row g-2">
+                                <div class="col-md-4">
+                                    <label class="form-label form-label-sm">Activate At</label>
+                                    <input type="datetime-local" name="activate_at" class="form-control form-control-sm"
+                                           value="<?= htmlspecialchars(str_replace(' ', 'T', $_POST['activate_at'] ?? $record['activate_at'] ?? '')) ?>">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label form-label-sm">Deactivate At</label>
+                                    <input type="datetime-local" name="deactivate_at" class="form-control form-control-sm"
+                                           value="<?= htmlspecialchars(str_replace(' ', 'T', $_POST['deactivate_at'] ?? $record['deactivate_at'] ?? '')) ?>">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label form-label-sm">Delete At <span class="text-danger">&#9888;</span></label>
+                                    <input type="datetime-local" name="delete_at" class="form-control form-control-sm"
+                                           value="<?= htmlspecialchars(str_replace(' ', 'T', $_POST['delete_at'] ?? $record['delete_at'] ?? '')) ?>">
+                                    <div class="form-text text-danger">Row will be permanently deleted</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <?php endif; ?>
                 <?php if (hasPermission('table_management')): ?>
                 <!-- View Groups -->
                 <div class="col-12">
@@ -625,6 +753,9 @@ if ($action === 'add') {
         ['title' => 'Admin',      'url' => '/admin'],
         ['title' => $displayName, 'url' => '', 'current' => true],
     ];
+
+    // EXT-04: process any pending scheduled activations/deactivations/deletions
+    processScheduledActions($tableName);
 
     // Fetch all rows and apply ACL filter
     $allRows      = dbGetRows("SELECT * FROM `{$tableName}` ORDER BY id DESC", []);
