@@ -921,3 +921,31 @@ VALUES ('Login Verification', 'login-otp', 'login-otp.php', 0, 'active')
 ON DUPLICATE KEY UPDATE custom_script = VALUES(custom_script), title = VALUES(title);
 
 -- =============================================================================
+
+-- =============================================================================
+-- Phase 5: User Experience — migration (2026-03-17)
+-- =============================================================================
+
+-- DATA-03: Add col_width to custom_table_fields
+-- col_width controls edit form field width: 'half' = col-md-6, 'full' = col-12
+-- DEFAULT 'half' preserves current behavior for all existing fields
+SET @preparedStatement = (
+    SELECT IF(
+        COUNT(*) = 0,
+        "ALTER TABLE custom_table_fields ADD COLUMN col_width VARCHAR(10) NOT NULL DEFAULT 'half' AFTER display_order",
+        'SELECT 1'
+    )
+    FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME   = 'custom_table_fields'
+      AND COLUMN_NAME  = 'col_width'
+);
+PREPARE stmt FROM @preparedStatement;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+-- EXT-04: Schedule columns (activate_at, deactivate_at, delete_at) are added to
+-- each individual custom table via migrateExistingCustomTables() and
+-- provisionCustomTable() — no central framework table changes required here.
+
+-- =============================================================================
