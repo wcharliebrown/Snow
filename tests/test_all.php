@@ -1679,6 +1679,9 @@ require_once __DIR__ . '/test_data_integrity.php';
 // Phase 4: Extensibility tests
 require_once __DIR__ . '/test_extensibility.php';
 
+// Phase 5: User Experience tests
+require_once __DIR__ . '/test_user_experience.php';
+
 // ─────────────────────────────────────────────────────────────────────────────
 // SUMMARY
 // ─────────────────────────────────────────────────────────────────────────────
