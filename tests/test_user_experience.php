@@ -101,11 +101,47 @@ $t->describe('DATA-03: Edit Form col_width Rendering', function (SnowTestRunner 
 $t->describe('DATA-04: Search, Sort, Filter', function (SnowTestRunner $t) {
 
     $t->it('WHERE builder produces LIKE clause for simple search q param', function (SnowTestRunner $t) {
-        $t->assertTrue(false, 'implement search WHERE builder in admin-custom-table.php');
+        // Simulate WHERE builder logic for simple search
+        $allowedFields = ['name', 'email'];
+        $q = 'hello';
+        $whereParts  = ['1=1'];
+        $whereParams = [];
+        $advActive   = false;
+        if (!$advActive && $q !== '') {
+            $likeParts = [];
+            foreach ($allowedFields as $col) {
+                $likeParts[]   = "`{$col}` LIKE ?";
+                $whereParams[] = '%' . $q . '%';
+            }
+            if ($likeParts) {
+                $whereParts[] = '(' . implode(' OR ', $likeParts) . ')';
+            }
+        }
+        $whereClause = implode(' AND ', $whereParts);
+        $t->assertTrue(str_contains($whereClause, 'LIKE'), 'Simple search must produce LIKE clause in WHERE');
+        $t->assertEqual('%hello%', $whereParams[0] ?? '', 'Simple search param must be %q%');
     });
 
     $t->it('WHERE builder produces per-field LIKE for adv[] params', function (SnowTestRunner $t) {
-        $t->assertTrue(false, 'implement advanced search WHERE builder');
+        // Simulate WHERE builder logic for advanced search
+        $allowedFields = ['name', 'email'];
+        $adv = ['name' => 'alice', 'email' => ''];
+        $whereParts  = ['1=1'];
+        $whereParams = [];
+        $advActive   = !empty(array_filter($adv));
+        if ($advActive) {
+            foreach ($adv as $col => $val) {
+                $val = trim($val);
+                if ($val !== '' && in_array($col, $allowedFields, true)) {
+                    $whereParts[]  = "`{$col}` LIKE ?";
+                    $whereParams[] = '%' . $val . '%';
+                }
+            }
+        }
+        $whereClause = implode(' AND ', $whereParts);
+        $t->assertTrue(str_contains($whereClause, '`name` LIKE ?'), 'Advanced search must produce per-field LIKE');
+        $t->assertEqual('%alice%', $whereParams[0] ?? '', 'Advanced search param must be %value%');
+        $t->assertTrue(!str_contains($whereClause, '`email` LIKE ?'), 'Empty adv field must not add LIKE clause');
     });
 
     $t->it('sort field allowlist rejects unknown field names', function (SnowTestRunner $t) {

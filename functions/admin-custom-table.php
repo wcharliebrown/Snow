@@ -8,6 +8,28 @@
 require_once __DIR__ . '/acl.php';
 
 /**
+ * DATA-04: Build a sortable column header link that preserves current search state.
+ * Uses http_build_query() to correctly encode adv[] array params.
+ */
+function sortLink(string $field, string $label, array $currentGet, string $currentSort, string $currentDir): string {
+    $params = array_filter([
+        'q'      => $currentGet['q'] ?? '',
+        'adv'    => $currentGet['adv'] ?? [],
+        'status' => $currentGet['status'] ?? '',
+    ], fn($v) => $v !== '' && $v !== []);
+    $newDir = ($currentSort === $field && strtoupper($currentDir) === 'ASC') ? 'desc' : 'asc';
+    $params['sort'] = $field;
+    $params['dir']  = $newDir;
+    $arrow = '';
+    if ($currentSort === $field) {
+        $arrow = strtoupper($currentDir) === 'ASC' ? ' &#9650;' : ' &#9660;';
+    }
+    $qs = http_build_query($params);
+    return '<a href="?' . htmlspecialchars($qs) . '" class="text-white text-decoration-none">'
+        . htmlspecialchars($label) . $arrow . '</a>';
+}
+
+/**
  * EXT-04: Process scheduled row lifecycle actions for the current table.
  * Called on every list view load. Idempotent: processed rows have their
  * schedule timestamp set to NULL after firing.
@@ -757,8 +779,54 @@ if ($action === 'add') {
     // EXT-04: process any pending scheduled activations/deactivations/deletions
     processScheduledActions($tableName);
 
-    // Fetch all rows and apply ACL filter
-    $allRows      = dbGetRows("SELECT * FROM `{$tableName}` ORDER BY id DESC", []);
+    // DATA-04: WHERE builder + dynamic ORDER BY
+    $allowedFields  = array_column($fields, 'field_name'); // $fields already filtered to is_visible=1
+    $sortableFields = array_merge($allowedFields, ['id', 'status', 'created_at', 'modified_at']);
+    $sort = in_array($_GET['sort'] ?? '', $sortableFields, true) ? $_GET['sort'] : 'id';
+    $dir  = strtolower($_GET['dir'] ?? '') === 'asc' ? 'ASC' : 'DESC';
+
+    $whereParts  = ['1=1'];
+    $whereParams = [];
+
+    // Status filter (standard column, handled separately)
+    $statusFilter = trim($_GET['status'] ?? '');
+    if (in_array($statusFilter, ['active', 'inactive'], true)) {
+        $whereParts[]  = '`status` = ?';
+        $whereParams[] = $statusFilter;
+    }
+
+    $advActive = !empty(array_filter((array)($_GET['adv'] ?? [])));
+
+    if ($advActive) {
+        // Advanced search: per-field LIKE (simple q ignored when adv active)
+        $adv = (array)($_GET['adv'] ?? []);
+        foreach ($adv as $col => $val) {
+            $val = trim($val);
+            if ($val !== '' && in_array($col, $allowedFields, true)) {
+                $whereParts[]  = "`{$col}` LIKE ?";
+                $whereParams[] = '%' . $val . '%';
+            }
+        }
+    } else {
+        // Simple search: LIKE across all visible fields
+        $q = trim($_GET['q'] ?? '');
+        if ($q !== '') {
+            $likeParts = [];
+            foreach ($allowedFields as $col) {
+                $likeParts[]   = "`{$col}` LIKE ?";
+                $whereParams[] = '%' . $q . '%';
+            }
+            if ($likeParts) {
+                $whereParts[] = '(' . implode(' OR ', $likeParts) . ')';
+            }
+        }
+    }
+
+    $whereClause = implode(' AND ', $whereParts);
+    $allRows     = dbGetRows(
+        "SELECT * FROM `{$tableName}` WHERE {$whereClause} ORDER BY `{$sort}` {$dir}",
+        $whereParams
+    );
     $rows         = filterRowsByViewAccess($allRows);
     $visibleCount = count($rows);
     ?>
