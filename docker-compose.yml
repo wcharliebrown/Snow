@@ -2,7 +2,6 @@ services:
   # MySQL Database
   mysql:
     image: mysql:8.0
-    container_name: snow_mysql
     restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: rootpassword
@@ -19,7 +18,6 @@ services:
 
   # PHP-FPM
   php:
-    container_name: snow_php
     restart: unless-stopped
     build:
       context: .
@@ -41,7 +39,6 @@ services:
 
   # Apache Web Server (serves static assets + proxies PHP to PHP-FPM)
   apache:
-    container_name: snow_apache
     restart: unless-stopped
     build:
       context: .
@@ -54,6 +51,21 @@ services:
       - snow_network
     depends_on:
       - php
+
+  # phpMyAdmin
+  phpmyadmin:
+    image: phpmyadmin:latest
+    restart: unless-stopped
+    environment:
+      PMA_HOST: mysql
+      PMA_USER: snow_user
+      PMA_PASSWORD: snow_password
+    ports:
+      - "8081:80"
+    networks:
+      - snow_network
+    depends_on:
+      - mysql
 
 volumes:
   mysql_data:

@@ -6,7 +6,7 @@ This directory contains Docker configuration for testing the Snow framework.
 
 1. **Start the test environment:**
 ```bash
-./test-docker.sh
+docker compose up --build -d
 ```
 
 2. **Access the framework:**
@@ -59,22 +59,22 @@ docker-compose down -v
 
 ### Access PHP Container
 ```bash
-docker exec -it snow_php bash
+docker compose exec php bash
 ```
 
 ### Access MySQL
 ```bash
-docker exec -it snow_mysql mysql -u snow_user -psnow_password snow
+docker compose exec mysql mysql -u snow_user -psnow_password snow
 ```
 
 ### View Apache Configuration
 ```bash
-docker exec snow_apache cat /usr/local/apache2/conf-available/snow.conf
+docker compose exec apache cat /usr/local/apache2/conf-available/snow.conf
 ```
 
 ### View PHP Configuration
 ```bash
-docker exec snow_php php -i | grep -E "(memory_limit|max_execution|upload_max)"
+docker compose exec php php -i | grep -E "(memory_limit|max_execution|upload_max)"
 ```
 
 ## Troubleshooting
@@ -86,23 +86,29 @@ ports:
   - "8081:80"  # Change 8080 to 8081
 ```
 
+If port 3306 is already in use (e.g. a local MySQL instance), change the MySQL port mapping in `docker-compose.yml`:
+```yaml
+ports:
+  - "3307:3306"  # Change 3306 to 3307 if local MySQL is already running
+```
+
 ### Database Connection Issues
 Check if MySQL is ready:
 ```bash
-docker exec snow_mysql mysqladmin ping -h"localhost"
+docker compose exec mysql mysqladmin ping -h"localhost"
 ```
 
 ### Permission Issues
 If you get permission errors, ensure logs/keys directories are writable:
 ```bash
-docker exec snow_php chown -R wwwuser:wwwuser /var/www/html/logs
-docker exec snow_php chown -R wwwuser:wwwuser /var/www/html/keys
+docker compose exec php chown -R wwwuser:wwwuser /var/www/html/logs
+docker compose exec php chown -R wwwuser:wwwuser /var/www/html/keys
 ```
 
 ### PHP Errors
 View PHP error log:
 ```bash
-docker exec snow_php tail -f /var/www/html/logs/php_errors.log
+docker compose exec php tail -f /var/www/html/logs/php_errors.log
 ```
 
 ## File Structure

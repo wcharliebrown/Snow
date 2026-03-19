@@ -20,6 +20,8 @@ cookies.txt
 # Claude Code project data
 .claude/
 
+SUGGESTIONS.md
+
 # Ad-hoc debug / scratch files
 debug-*.php
 public_html/debug*.php

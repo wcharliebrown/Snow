@@ -47,6 +47,22 @@ A zero-dependency PHP admin framework for LAMP stacks. Any MySQL table — custo
 - **Session Viewer** — View all active sessions and force-logout any session
 - **Password Policy Config** — Configure policy from admin UI; takes effect immediately
 
+## Quick Start (Docker)
+
+The fastest way to try Snow is with Docker:
+
+```bash
+git clone https://github.com/wcharliebrown/Snow.git snow
+cd snow
+docker compose up --build -d
+```
+
+Then open **http://localhost:8080** and log in with `admin@example.com` / `admin123`.
+
+See [README-Docker.md](README-Docker.md) for full Docker documentation, container details, and troubleshooting.
+
+---
+
 ## Requirements
 
 - Linux Server (Ubuntu 24+ recommended)
@@ -60,13 +76,14 @@ A zero-dependency PHP admin framework for LAMP stacks. Any MySQL table — custo
 ### 1. Clone the Repository
 
 ```bash
-git clone git@github.com:wcharliebrown/Snow.git /var/www/html/snow
+git clone https://github.com/wcharliebrown/Snow.git /var/www/html/snow
 cd /var/www/html/snow
 ```
 
 ### 2. Set Permissions
 
 ```bash
+mkdir -p logs keys plugins snapshots
 sudo chown -R www-data:www-data .
 sudo chmod -R 755 .
 sudo chmod -R 770 logs keys
@@ -74,29 +91,14 @@ sudo chmod -R 770 logs keys
 
 ### 3. Configure Environment
 
-Copy `.env.example` to `.env` and edit:
+Copy `.env.example` to `.env` and edit the values for your environment:
 
 ```bash
 cp .env.example .env
+nano .env
 ```
 
-```bash
-# Database
-DB_HOST=localhost
-DB_NAME=snow
-DB_USER=your_db_user
-DB_PASS=your_secure_password
-
-# Site
-SITE_NAME=Your Website
-SITE_URL=https://yourdomain.com
-ADMIN_EMAIL=admin@yourdomain.com
-
-# Security
-SESSION_TIMEOUT=3600
-PASSWORD_MIN_LENGTH=8
-ENCRYPTION_KEY=your_32_character_encryption_key_here
-```
+The file includes settings for database connection, site URL, session/security, logging, SMTP email, and dev/debug flags. See `.env.example` for all available variables.
 
 ### 4. Create Database
 
@@ -148,7 +150,14 @@ sudo systemctl restart apache2
 ```
 snow/
 ├── .env                        # Configuration (copy from .env.example)
+├── .env.example                # Environment variable template
 ├── database_schema.sql         # Full schema including all v1.0 tables
+├── docker-compose.yml          # Docker Compose (PHP-FPM + Apache + MySQL + phpMyAdmin)
+├── docker-compose-simple.yml   # Simplified single-container Docker Compose
+├── Dockerfile.php              # PHP-FPM container definition
+├── Dockerfile.apache           # Apache container definition
+├── apache.conf                 # Apache virtual host config for Docker
+├── php.ini                     # Custom PHP configuration for Docker
 ├── public_html/                # Web root
 │   ├── index.php               # Main bootstrap
 │   └── .htaccess               # Apache rewrite rules
@@ -165,7 +174,12 @@ snow/
 │   ├── pages.php               # Page rendering + CSRF enforcement
 │   ├── reports.php             # Report rendering
 │   └── template.php            # Token-based template system
+├── templates/                  # Email and page templates
 ├── reports/                    # Report files (*.php)
+├── plugins/                    # Import/export plugins
+├── snapshots/                  # Table snapshots
+├── docs/                       # Documentation and screenshots
+├── tests/                      # Test scripts
 ├── logs/                       # Activity and error logs
 └── keys/                       # Encryption keys
 ```
